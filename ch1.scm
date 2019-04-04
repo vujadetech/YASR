@@ -3,7 +3,7 @@
 ; To run test code, uncomment the double semi-colons at the end of each section.
 
 (define xs '(42 99 7)) ; for testing
-(define ZeroToFour '(0 1 2 3 4))
+(define ZeroToFive '(0 1 2 3 4 5))
 
 (define (sq x) (* x x)) ; sq is an abbreviation for square 
 
@@ -86,17 +86,36 @@
 (println "Exercise 1.10, Ackermann values:")
 (list (A 1 10) (A 2 4) (A 3 3))
 
-(define (f n) (A 0 n)) ; f(n) = 2n
-(map f ZeroToFour)
+(define (f n) (A 0 n)) ; f(n) = 2*n
 (define (g n) (A 1 n)) ; g(n) = 2^n, where ^ is exponentiation
 (define (h n) (A 2 n)) ; h(n) = 2^2^2...^2 n times, in other words, 2 to the 2 to the 2 ... n times
 ; so h(4) = 2^2^2^2 = 2^2^4 = 2^16 = 65536
-; and h(5) = 2^2^2^2^2 = 2^h(4) = 2^65536,
+; and h(5) = 2^2^2^2^2 = 2^h(4) = 2^65536 = "a number with over 19000 digits",
 ; or as Donald Trump would call it, "YUUUUUUUGE!!!", since there are roughly 2^100 particles in the
 ; universe and h(5) is substantially larger than that, so Mr. Trump is being his
 ; characteristically restrained self.
 
+(define yuge (h 5)) ; Unfortunately this number is still to small to adequately fund his wall in either pesos or US dollars.
+(define numberOfDigitsInYuge (length (string->list (number->string yuge))))
+(println "numberOfDigitsInYuge:")
+numberOfDigitsInYuge
 ; *******************************************
+; Ex 1.11: recursive/iterative
+(define (f-rec n) ; Recursive version is called f-recurse
+  (cond
+    [(< n 3) n]
+    [else (apply + (list (f-rec (- n 1)) (* 2 (f-rec (- n 2))) (* 3 (f-rec (- n 3)))))]))
+
+(define (f-iter n)
+   (f-iter-h 0 1 2 n)); Iterative version of f is f-iter
+
+; f-iter helper function:
+(define (f-iter-h fn-3 fn-2 fn-1 n) ; acc is accumulator
+  (cond
+    [(< n 2) n]
+    [(= n 2) fn-1]
+    [else (let ([f-next (+ fn-1 (* 2 fn-2) (* 3 fn-3))])
+            (f-iter-h fn-2 fn-1 f-next (- n 1)))]))
 ; *******************************************
 ; *******************************************
 ; *******************************************
