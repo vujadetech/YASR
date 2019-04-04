@@ -3,6 +3,7 @@
 ; To run test code, uncomment the double semi-colons at the end of each section.
 
 (define xs '(42 99 7)) ; for testing
+(define ZeroToFour '(0 1 2 3 4))
 
 (define (sq x) (* x x)) ; sq is an abbreviation for square 
 
@@ -74,6 +75,27 @@
 ;; (cube (cubert 2)) ; 2.0000592593226547
 ;; (cube (cubert 0.001)) ; 0.0013964147028898309 which is off by quite a bit
 ; *******************************************
+; Ex 1.10: Ackermann's function
+(define (A x y)
+  (cond
+    [(= y 0) 0]
+    [(= x 0) (* 2 y)]
+    [(= y 1) 2]
+    [else (A (- x 1) (A x (- y 1)))]))
+
+(println "Exercise 1.10, Ackermann values:")
+(list (A 1 10) (A 2 4) (A 3 3))
+
+(define (f n) (A 0 n)) ; f(n) = 2n
+(map f ZeroToFour)
+(define (g n) (A 1 n)) ; g(n) = 2^n, where ^ is exponentiation
+(define (h n) (A 2 n)) ; h(n) = 2^2^2...^2 n times, in other words, 2 to the 2 to the 2 ... n times
+; so h(4) = 2^2^2^2 = 2^2^4 = 2^16 = 65536
+; and h(5) = 2^2^2^2^2 = 2^h(4) = 2^65536,
+; or as Donald Trump would call it, "YUUUUUUUGE!!!", since there are roughly 2^100 particles in the
+; universe and h(5) is substantially larger than that, so Mr. Trump is being his
+; characteristically restrained self.
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
