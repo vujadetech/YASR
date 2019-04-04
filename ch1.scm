@@ -2,18 +2,17 @@
 (require srfi/1) ; Required for iota which emulates python range.
 (define (rng a b) (iota (- b a) a)) ; Return list of integers in interval [a, b).
 
-; To run test code, uncomment the double semi-colons at the end of each section.
+; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
+; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
 
-(define xs '(42 99 7)) ; for testing
-(define ZeroToFive '(0 1 2 3 4 5))
-
+(define xs '(42 99 7))  ; for testing
 (define (sq x) (* x x)) ; sq is an abbreviation for square 
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
 (define (ex1.3 xs)
   (apply + (map sq (remove (apply min xs) xs))))
-;; (ex1.3 xs) ; '(42 99 7) -> 11565
+;; (ex1.3 '(42 99 7)) -> 11565
 
 ; *******************************************
 ; Ex 1.7 good-enough-rel? relative version
@@ -136,6 +135,15 @@ numberOfDigitsInYuge
 ; process, but no surprise there, right?
 
 ; *******************************************
+; Ex 1.12, Pascal's triangle
+
+; sum-between takes a list of n numbers and returns the list
+; gotten by adding successive pairs, e.g. [a, b, c] -> [a+b, b+c]
+(define (sum-between xs)
+  (cond ; Assume  |xs| > 1, since summing between doesn't make sense otherwise
+    [(= (length xs) 2) (list (apply + xs))]
+    [else (cons (+ (car xs) (cadr xs)) (sum-between (cdr xs)))]))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
