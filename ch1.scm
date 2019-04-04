@@ -6,7 +6,13 @@
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
 
 (define xs '(42 99 7))  ; for testing
-(define (sq x) (* x x)) ; sq is an abbreviation for square 
+(define (sq x) (* x x)) ; sq is an abbreviation for square
+
+; I know syntactic sugar causes cancer of the semicolon, but just like when you're
+; at the Golden Corral chocolate fondue fountain, you'll be fine as long as you don't overindulge.
+; So here's a few [sprinkles and gummy bears] *strikethrough* helper functions:
+(define (-- x) (- x 1))
+(define (++ x) (+ x 1))
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -126,8 +132,8 @@ numberOfDigitsInYuge
   (time (proc n)))
 
 (println "")
-(println "Time of running Ex 1.10 f-rec on values in (rng 20 25):")
-(map (lambda (n) (time-proc/1 f-rec n)) (rng 20 25))
+(println "Time of running Ex 1.10 f-rec on n = 20")
+(time-proc/1 f-rec 20)
 (println "Time of running Ex 1.10 f-iter on n=1000:")
 (time-proc/1 f-iter 1000)
 ; Note that although both procedures are implemented recursively,
@@ -144,6 +150,22 @@ numberOfDigitsInYuge
     [(= (length xs) 2) (list (apply + xs))]
     [else (cons (+ (car xs) (cadr xs)) (sum-between (cdr xs)))]))
 
+; pt-nth gets nth row of Pascals triangle using 1 based indexing
+(define pt-nth-row
+  (lambda (n)
+    (cond
+      [(= n 1) '(1)]
+      [(= n 2) '(1 1)]
+      [else
+       (let ([interior-list (sum-between (pt-nth-row (- n 1)))])
+         (append '(1) interior-list '(1)))])))
+
+(define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
+  (cond
+    [(= n 1) '(1)]
+    [else (map pt-nth-row (rng 1 (++ n)))])) ; ++n since the interval is half open, so n would be omitted otherwise
+
+;; (pascals-triangle 10)
 ; *******************************************
 ; *******************************************
 ; *******************************************
