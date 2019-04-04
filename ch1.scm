@@ -13,6 +13,9 @@
 ; So here's a few [sprinkles and gummy bears] *strikethrough* helper functions:
 (define (-- x) (- x 1))
 (define (++ x) (+ x 1))
+(define (non-empty-list? xs) (and (list? xs) (> (length xs) 0)))
+(define (singleton-list? xs) (and (non-empty-list? xs) (= (length xs) 1)))
+(define (halve x) (/ x 2))
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -160,17 +163,34 @@ numberOfDigitsInYuge
        (let ([interior-list (sum-between (pt-nth-row (- n 1)))])
          (append '(1) interior-list '(1)))])))
 
-#;(define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
-  (cond
-    [(= n 1) '(1)]
-    [else (map pt-nth-row (rng 1 (++ n)))])) ; ++n since the interval is half open, so n would be omitted otherwise
-
 (define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
   (map pt-nth-row (rng 1 (++ n)))) ; ++n since the interval is half open, so n would be omitted otherwise
 
 ;; (pascals-triangle 10)
 ; *******************************************
+; Ex 1.15 Skipped for now
 ; *******************************************
+; Ex 1.16, exponentiation
+
+; fast-expt from p 58:
+(define (fast-expt b n)
+  (cond [(= n 0) 1]
+        [(even? n) (sq (fast-expt b (halve n)))]
+        [else (* b (fast-expt b (-- n)))]))
+
+; This is logarithmic in n since at every step it takes constant time (for the two trivial cases),
+; or it solves a subproblem for a new n which is either half of n or half of (n-1).
+(define (fast-expt-iter-h b n a)
+  (cond [(= n 0) a]
+        [(= n 1) (* a b)]
+        [(even? n) (fast-expt-iter-h (sq b) (halve n) a)]
+        [else (fast-expt-iter-h (sq b) (halve (-- n)) (* a b))]))
+
+(define (fast-expt-iter b n)
+  (fast-expt-iter-h b n 1))
+
+; On my machine 2^100000 was computed in 0 ms, so realistically less than half a millisecond.
+;; (time (fast-expt-iter 2 100000))
 ; *******************************************
 ; *******************************************
 
