@@ -150,7 +150,7 @@ numberOfDigitsInYuge
     [(= (length xs) 2) (list (apply + xs))]
     [else (cons (+ (car xs) (cadr xs)) (sum-between (cdr xs)))]))
 
-; pt-nth gets nth row of Pascals triangle using 1 based indexing
+; pt-nth-row gets nth row of Pascals triangle using 1 based indexing
 (define pt-nth-row
   (lambda (n)
     (cond
@@ -160,10 +160,13 @@ numberOfDigitsInYuge
        (let ([interior-list (sum-between (pt-nth-row (- n 1)))])
          (append '(1) interior-list '(1)))])))
 
-(define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
+#;(define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
   (cond
     [(= n 1) '(1)]
     [else (map pt-nth-row (rng 1 (++ n)))])) ; ++n since the interval is half open, so n would be omitted otherwise
+
+(define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
+  (map pt-nth-row (rng 1 (++ n)))) ; ++n since the interval is half open, so n would be omitted otherwise
 
 ;; (pascals-triangle 10)
 ; *******************************************
