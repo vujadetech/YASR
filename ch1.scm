@@ -4,6 +4,7 @@
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
+; NB: These haven't been tested exhaustively so there could be errors.
 
 (define xs '(42 99 7))  ; for testing
 (define (sq x) (* x x)) ; sq is an abbreviation for square
@@ -16,6 +17,7 @@
 (define (non-empty-list? xs) (and (list? xs) (> (length xs) 0)))
 (define (singleton-list? xs) (and (non-empty-list? xs) (= (length xs) 1)))
 (define (halve x) (/ x 2))
+(define (double x) (* x 2))
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -178,11 +180,11 @@ numberOfDigitsInYuge
         [(even? n) (sq (fast-expt b (halve n)))]
         [else (* b (fast-expt b (-- n)))]))
 
-; This is logarithmic in n since at every step it takes constant time (for the two trivial cases),
+; This is logarithmic in n since at every step it takes constant time for the trivial case,
 ; or it solves a subproblem for a new n which is either half of n or half of (n-1).
 (define (fast-expt-iter-h b n a)
   (cond [(= n 0) a]
-        [(= n 1) (* a b)]
+       ; [(= n 1) (* a b)] ; Not sure if this test is needed
         [(even? n) (fast-expt-iter-h (sq b) (halve n) a)]
         [else (fast-expt-iter-h (sq b) (halve (-- n)) (* a b))]))
 
@@ -192,10 +194,60 @@ numberOfDigitsInYuge
 ; On my machine 2^100000 was computed in 0 ms, so realistically less than half a millisecond.
 ;; (time (fast-expt-iter 2 100000))
 ; *******************************************
-; *******************************************
+; Ex 1.17, fast-mult
+; This is the dual of 1.16, so just take that and replace * with + and 1 with 0.
+(define (fast-mult-iter-h b n a)
+  (cond [(= n 0) a]
+      ;   [(= n 1) (+ a b)]
+        [(even? n) (fast-mult-iter-h (double b) (halve n) a)]
+        [else (fast-mult-iter-h (double b) (halve (-- n)) (+ a b))]))
+
+(define (fast-mult-iter b n)
+  (fast-mult-iter-h b n 0))
+
 
 ; *******************************************
 ; *******************************************
-
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
 ; *******************************************
 ; *******************************************
