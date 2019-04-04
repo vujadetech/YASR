@@ -1,4 +1,6 @@
 #lang racket
+(require srfi/1) ; Required for iota which emulates python range.
+(define (rng a b) (iota (- b a) a)) ; Return list of integers in interval [a, b).
 
 ; To run test code, uncomment the double semi-colons at the end of each section.
 
@@ -74,6 +76,7 @@
 
 ;; (cube (cubert 2)) ; 2.0000592593226547
 ;; (cube (cubert 0.001)) ; 0.0013964147028898309 which is off by quite a bit
+
 ; *******************************************
 ; Ex 1.10: Ackermann's function
 (define (A x y)
@@ -91,31 +94,47 @@
 (define (h n) (A 2 n)) ; h(n) = 2^2^2...^2 n times, in other words, 2 to the 2 to the 2 ... n times
 ; so h(4) = 2^2^2^2 = 2^2^4 = 2^16 = 65536
 ; and h(5) = 2^2^2^2^2 = 2^h(4) = 2^65536 = "a number with over 19000 digits",
-; or as Donald Trump would call it, "YUUUUUUUGE!!!", since there are roughly 2^100 particles in the
-; universe and h(5) is substantially larger than that, so Mr. Trump is being his
+; or as Donald Trump would call it, "YUUUUUUUGE!!!". Since there are roughly 2^100 particles in the
+; universe and h(5) is substantially larger than that, Mr. Trump is being his
 ; characteristically restrained self.
 
-(define yuge (h 5)) ; Unfortunately this number is still to small to adequately fund his wall in either pesos or US dollars.
+(define yuge (h 5)) ; Unfortunately this number is still to small to adequately
+; fund Trump's wall (ahem - Wall, or better yet 'big, beautiful Wall') in either pesos or US dollars.
 (define numberOfDigitsInYuge (length (string->list (number->string yuge))))
 (println "numberOfDigitsInYuge:")
 numberOfDigitsInYuge
+
 ; *******************************************
 ; Ex 1.11: recursive/iterative
-(define (f-rec n) ; Recursive version is called f-recurse
+(define (f-rec n) ; Recursive version is called f-rec
   (cond
     [(< n 3) n]
     [else (apply + (list (f-rec (- n 1)) (* 2 (f-rec (- n 2))) (* 3 (f-rec (- n 3)))))]))
 
-(define (f-iter n)
-   (f-iter-h 0 1 2 n)); Iterative version of f is f-iter
+(define (f-iter n) ; Iterative version of f is f-iter
+   (f-iter-h 0 1 2 n))
 
 ; f-iter helper function:
-(define (f-iter-h fn-3 fn-2 fn-1 n) ; acc is accumulator
+(define (f-iter-h fn-3 fn-2 fn-1 n) ; acc is accumulator and the fn values track the 3 most recent results
   (cond
     [(< n 2) n]
     [(= n 2) fn-1]
     [else (let ([f-next (+ fn-1 (* 2 fn-2) (* 3 fn-3))])
             (f-iter-h fn-2 fn-1 f-next (- n 1)))]))
+
+; (time (f-iter 10000))
+(define (time-proc/1 proc n)
+  (time (proc n)))
+
+(println "")
+(println "Time of running Ex 1.10 f-rec on values in (rng 20 25):")
+(map (lambda (n) (time-proc/1 f-rec n)) (rng 20 25))
+(println "Time of running Ex 1.10 f-iter on n=1000:")
+(time-proc/1 f-iter 1000)
+; Note that although both procedures are implemented recursively,
+; the iterative process runs orders of magnitude faster than the recursive
+; process, but no surprise there, right?
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
