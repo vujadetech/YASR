@@ -18,6 +18,13 @@
 (define (singleton-list? xs) (and (non-empty-list? xs) (= (length xs) 1)))
 (define (halve x) (/ x 2))
 (define (double x) (* x 2))
+(define (fst xs) (car xs))
+(define (snd xs) (cadr xs))
+(define (zero? x) (= x 0))
+(define (iter f k n)
+  (cond [(zero? k) n]
+        [(= 1 k) (f n)]
+        [else (f (iter f (-- k) n))]))
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -184,7 +191,6 @@ numberOfDigitsInYuge
 ; or it solves a subproblem for a new n which is either half of n or half of (n-1).
 (define (fast-expt-iter-h b n a)
   (cond [(= n 0) a]
-       ; [(= n 1) (* a b)] ; Not sure if this test is needed
         [(even? n) (fast-expt-iter-h (sq b) (halve n) a)]
         [else (fast-expt-iter-h (sq b) (halve (-- n)) (* a b))]))
 
@@ -198,16 +204,79 @@ numberOfDigitsInYuge
 ; This is the dual of 1.16, so just take that and replace * with + and 1 with 0.
 (define (fast-mult-iter-h b n a)
   (cond [(= n 0) a]
-      ;   [(= n 1) (+ a b)]
         [(even? n) (fast-mult-iter-h (double b) (halve n) a)]
         [else (fast-mult-iter-h (double b) (halve (-- n)) (+ a b))]))
 
 (define (fast-mult-iter b n)
   (fast-mult-iter-h b n 0))
 
+; *******************************************
+; Ex 1.18: 1.16 and 1.17 are already iterative, unless I'm missing something.
+; *******************************************
+; Ex 1.19: fibonacci log
 
-; *******************************************
-; *******************************************
+; fib-iter from 1.2.2, p50:
+#; (define (fib n) (fib-iter 1 0 n))
+#; (define (fib-iter a b count)
+  (if (= count 0) b (fib-iter (+ a b) a (-- count))))
+
+; There's prolly a simpler way to do this, but this is what I got.
+(define (T ab p q) ; ab is a list to facilitate iterating T(T(T...ab p q)..)
+  (let ([a (fst ab)] [b (snd ab)])
+    (list (+ (* (+ a b) q) (* a p)) (+ (* b p) (* a q)))))
+
+; define T^2_xy for the 4 entries in the 2x2 matrix that is T^2
+(define (Tsq_11 p q) (+ (sq (+ p q)) (sq q)))
+(define (Tsq_12 p q) (+ (* 2 p q) (sq q)))
+(define (Tsq_21 p q) (Tsq_12 p q)) ; T^2 is symmetric
+(define (Tsq_22 p q) (+ (sq p) (sq q)))
+
+(define (T^2 ab p q)
+  (let ([a (fst ab)] [b (snd ab)])
+    (list (+ (* (Tsq_11 p q) a) (* (Tsq_12 p q) b))
+          (+ (* (Tsq_21 p q) a) (* (Tsq_22 p q) b)))))
+
+(define f0 '(1 0)) ; start for fib
+(define (T_01 ab) (T ab 0 1)) ; T_pq transform with [p, q] = [0, 1] for fibonacci 
+(define (T^2_01 ab) (T^2 ab 0 1)) ; Ditto for T^2_01 transform
+#; (define (T^k_01 ab k) ; iterate T_01 transform on [a,b] k times
+  (let ([a (fst ab)] [b (snd ab)])
+    (cond [(zero? k) ab]
+          [(= k 1) (T_01 ab)]
+          [(= k 2) (T^2_01 ab)]
+          [(even? k)      (T^k_01 (T^2_01 ab) (halve     k))  ]
+          [(odd? k) (T_01 (T^k_01 (T^2_01 ab) (halve (-- k))))])))
+
+(define (T^k_01 ab k) ; iterate T_01 transform on [a,b] k times
+ ; (let ([a (fst ab)] [b (snd ab)])
+    (cond [(zero? k) ab]
+          [(= k 1) (T_01 ab)]
+          [(= k 2) (T^2_01 ab)]
+          [(even? k)      (T^2_01 (T^k_01 ab (halve k)))]
+          [(odd? k) (T_01 (T^2_01 (T^k_01 ab (halve (-- k)))))]))
+
+(define (tk-simple ab k)
+  (cond [(= 1 k) (t ab)]
+        [(even? k) (iter t2 (halve k) ab)]
+        [else (t (tk-simple ab (-- k)))]))
+
+(define tk (lambda (k) (T^k_01 f0 k)))
+(define t T_01)
+(define (t-iter k) (iter t k f0))
+(define (t2 ab) (T^2_01 ab))
+
+(define (fib-log-pair n) (T^k_01 '(1 0) n))
+;(define (fib-log n) (cadr (T^k_01 '(1 0) n)))
+(define (fib-log n) (cadr (tk-simple '(1 0) n)))
+
+#; (define (fib-iter ab n) ; using n instead of count b/c I'm too lazy to type cou [see what I did there?]
+  (let ([a (fst ab)] [b (snd ab)])
+    (cond [(zero? n) b]
+          [(even? n) (fib-iter (T^2_01 ab) (halve n))]
+          [else (T_01 (fib-iter (T^2_01 ab) (halve (-- n))))])))
+
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
