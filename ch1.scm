@@ -275,7 +275,8 @@ numberOfDigitsInYuge
           [(even? n) (fib-iter (T^2_01 ab) (halve n))]
           [else (T_01 (fib-iter (T^2_01 ab) (halve (-- n))))])))
 
-
+(println "First 10 fibonacci's:")
+(map fib-log (rng 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
 
 ; *******************************************
 ; *******************************************
