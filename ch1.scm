@@ -1,13 +1,20 @@
 #lang racket
 (require srfi/1) ; Required for iota which emulates python range.
-(define (rng a b) (iota (- b a) a)) ; Return list of integers in interval [a, b).
+(define range ; (iota count [start step]) == range([start=0], stop, [step]) ; python3 range
+  (case-lambda
+    [(start stop step)
+     (let ([count (ceiling (/ (- stop start) step))])
+       (iota count start step))]
+    [(start stop) (range start stop 1)] ;  (iota (- stop start) start)] ; Return list of integers in interval  [start, stop).
+    [(stop) (range 0 stop)])) ; Return list of integers in interval [0, stop).
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
 ; NB: These haven't been tested exhaustively so there could be errors.
 
 (define xs '(42 99 7))  ; for testing
-(define (sq x) (* x x)) ; sq is an abbreviation for square
+(define (square x) (* x x))
+(define sq square) ; sq is an abbreviation of square for Mr. Lazybone's over here, i.e., "Yours truly"
 
 ; I know syntactic sugar causes cancer of the semicolon, but just like when you're
 ; at the Golden Corral chocolate fondue fountain, you'll be fine as long as you don't overindulge.
@@ -25,6 +32,12 @@
   (cond [(zero? k) n]
         [(= 1 k) (f n)]
         [else (f (iter f (-- k) n))]))
+(define (time-ms proc . xs) ; time in ms of running proc on xs, return pair (result . "time in ms") 
+    (let* ([t0 (current-inexact-milliseconds)] [y (apply proc xs)] [delta (- (current-inexact-milliseconds) t0)])
+        (cons y delta)))
+(define (first-two-same? x . xs)
+  (if (= x (car xs)) #t #f))
+(define (mean xs) (/ (apply + xs) (length xs))) ; arithmetic mean
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -173,7 +186,7 @@ numberOfDigitsInYuge
          (append '(1) interior-list '(1)))])))
 
 (define (pascals-triangle n) ; first n rows of Pascal's triangle, 1 indexed
-  (map pt-nth-row (rng 1 (++ n)))) ; ++n since the interval is half open, so n would be omitted otherwise
+  (map pt-nth-row (range 1 (++ n)))) ; ++n since the interval is half open, so n would be omitted otherwise
 
 ;; (pascals-triangle 10)
 ; *******************************************
@@ -260,6 +273,11 @@ numberOfDigitsInYuge
         [(even? k) (iter t2 (halve k) ab)]
         [else (t (tk-simple ab (-- k)))]))
 
+(define (tn-simple ab n) ; modelled after fast-exp
+  (cond [(zero? n) ab]
+        [(even? n) (tn-simple (t2 ab) (halve n))]
+        [else (t (tn-simple ab (-- n)))]))
+
 (define tk (lambda (k) (T^k_01 f0 k)))
 (define t T_01)
 (define (t-iter k) (iter t k f0))
@@ -276,10 +294,103 @@ numberOfDigitsInYuge
           [else (T_01 (fib-iter (T^2_01 ab) (halve (-- n))))])))
 
 (println "First 10 fibonacci's:")
-(map fib-log (rng 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
+(map fib-log (range 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
+;;; TODO: verify that my version is O(log n), and do the textbook version on p62.
+; *******************************************
+; Ex 1.21, smallest-divisor
 
+(define (smallest-divisor n)
+  (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+(define (divides? a b)
+  (= (remainder b a) 0))
+
+; We can test whether a number is prime as follows: n is prime if and only if n is its own smallest divisor.
+
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+;;; (map smallest-divisor '(199 1999 19999)) ; First two are prime, last one has 7 as a factor.
 ; *******************************************
-; *******************************************
+; Ex 1.22, Search for primes
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n))
+
+(define (start-prime-test n [start-time (current-inexact-milliseconds)]) 
+  (when (prime? n)
+      (report-prime (- (current-inexact-milliseconds) start-time))))
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+
+(define (oddify n) ; returns n if n is already odd, otherwise adds 1 to make it odd
+  (if (odd? n) n (++ n)))
+
+(define (odds-in-range a b) ; a can be even and range is half open so b is omitted regardless
+  (range (oddify a) b 2))
+
+(define (search-for-primes a b) ; search for primes among the odd values in [a, b)
+  (filter prime? (odds-in-range a b)))
+
+(define (pi_ N) (/ N (log N)))  ; pi_(N) function given by the prime number theorem
+
+(define (find-k-smallest-primes>n k n) ; find the k smallest primes that are larger than n
+  (let ([a n] [b (+ n (* k (ceiling (pi_ n))))]) ; use interval [a, a + k*pi_(n)) to test for primes, which
+    ; may not work since prime number theorem is statistical
+    (let* ([candidates (search-for-primes a b)] ; candidates b/c there's no guarantee k will be present
+           [j (length candidates)])   
+      (if (>= j k) ; enough primes were generated ...
+          (take candidates k) ; ... so return the k primes
+          (append candidates (find-k-smallest-primes>n (- k j) (last candidates))))))) ; didn't get enough, so 
+          ; keep the j candidates found so far and add k-j more recursively, setting n = last candidate found
+
+(define kspn find-k-smallest-primes>n) ; abbreviation
+
+#; (define (predicted x1 y1 x2 proc) ; x1y1 is a pair, x2 an x-coord, return pair (x2 . y2)
+  ; where y2 the result of applying proc to x1 and y1 (e.g., root(n) growth)
+  (cons x2 (proc x1 y1 x2)))
+
+(define (root-n-pred x1 y1 x2) ; get y2 from x1 y1 and x2 given root(n) growth
+  (let* ([n (/ x2 x1)] [scale (sqrt n)]) (* y1 scale)))
+
+(define (prime-times) ; ps is a list of primes, returns list of times for testing their primality in ms
+; This fall on CBS after Survivor (b/c it's "prime-times", get it?).
+; Apropos that, this code could use a refactoring as it's currently a bigger trainwreck than Phillip from a season of Survivor a few years ago.
+  (let* ([k 3] [primes1000 (kspn k 1000   )]
+               [primes10k  (kspn k 10000  )]
+               [primes1mil (kspn k 1000000)]
+               )
+    (let ([times1000 (map cdr (map (lambda (p) (time-ms prime? p)) primes1000))]
+          [times10k (map cdr (map (lambda (p) (time-ms prime? p)) primes10k))]
+          [times1mil (map cdr (map (lambda (p) (time-ms prime? p)) primes1mil))]
+          )
+      (let ([real-times (list (list 1000 (mean times1000))
+                              (list 10000 (mean times10k))
+                              (list 1000000 (mean times1mil))
+                              )])
+        (display "Real times: ") (displayln real-times)
+        
+        (define expected-times
+          (let* ([nt0 (car real-times)] [n0 (car nt0)] [t0 (cadr nt0)])
+            (zip (map car real-times)
+            (cons t0 (map (lambda (n1) (root-n-pred n0 t0 n1)) (map car (cdr real-times)))))))
+        
+        (display "Expected times: ") (displayln expected-times)
+        ))))
+
+;; (prime-times)
+; My machine gave this output:
+; Real times: ((1000 0.005289713541666667) (10000 0.013264973958333334) (1000000 0.11661783854166667))
+; Expected times: ((1000 0.005289713541666667) 0.016727542987989816 0.16727546055465234)
+; So for these cases the expected is diverging above the real value with the
+; difference increasing as n gets larger.
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
