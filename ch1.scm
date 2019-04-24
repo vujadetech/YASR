@@ -1,24 +1,25 @@
 #lang racket
 (require srfi/1) ; Required for iota which emulates python range.
-(define range ; (iota count [start step]) == range([start=0], stop, [step]) ; python3 range
+
+; Didn't realize range was already a builtin, but leaving it in (and commented out) for now.
+#; (define range ; (iota count [start step]) == range([start=0], stop, [step]) ; python3 range
   (case-lambda
     [(start stop step)
      (let ([count (ceiling (/ (- stop start) step))])
        (iota count start step))]
-    [(start stop) (range start stop 1)] ;  (iota (- stop start) start)] ; Return list of integers in interval  [start, stop).
+    [(start stop) (range start stop 1)] ; Return list of integers in interval  [start, stop).
     [(stop) (range 0 stop)])) ; Return list of integers in interval [0, stop).
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
 ; NB: These haven't been tested exhaustively so there could be errors.
 
-(define xs '(42 99 7))  ; for testing
+(define xs '(42 99 7))    ; for testing
 (define (square x) (* x x))
 (define sq square) ; sq is an abbreviation of square for Mr. Lazybone's over here, i.e., "Yours truly"
 
-; I know syntactic sugar causes cancer of the semicolon, but just like when you're
-; at the Golden Corral chocolate fondue fountain, you'll be fine as long as you don't overindulge.
-; So here's a few [sprinkles and gummy bears] *strikethrough* helper functions:
+; Some helper functions:
+(define mod remainder)
 (define (-- x) (- x 1))
 (define (++ x) (+ x 1))
 (define (non-empty-list? xs) (and (list? xs) (> (length xs) 0)))
@@ -38,6 +39,7 @@
 (define (first-two-same? x . xs)
   (if (= x (car xs)) #t #f))
 (define (mean xs) (/ (apply + xs) (length xs))) ; arithmetic mean
+(define (decades n) (map (lambda (n) (expt 10 n)) (range 0 n))) ; useful for checking O(f(n)) growth, e.g. in prime testing problems
 
 ; *******************************************
 ; Ex 1.3 [list of 3 numbers] -> [sum of squares of the two larger nums]
@@ -297,6 +299,28 @@ numberOfDigitsInYuge
 (map fib-log (range 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
 ;;; TODO: verify that my version is O(log n), and do the textbook version on p62.
 ; *******************************************
+; Procs given on pp67-68:
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m))
+                    m))
+        (else
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))        
+
+(define (fermat-test n)
+  (define (try-it a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+
+(define (fast-prime? n times)
+  (cond ((= times 0) true)
+        ((fermat-test n) (fast-prime? n (- times 1)))
+        (else false)))
+
+; *******************************************
 ; Ex 1.21, smallest-divisor
 
 (define (smallest-divisor n)
@@ -310,8 +334,7 @@ numberOfDigitsInYuge
 
 ; We can test whether a number is prime as follows: n is prime if and only if n is its own smallest divisor.
 
-(define (prime? n)
-  (= n (smallest-divisor n)))
+(define (prime? n) (= n (smallest-divisor n)))
 
 ;;; (map smallest-divisor '(199 1999 19999)) ; First two are prime, last one has 7 as a factor.
 ; *******************************************
@@ -352,6 +375,7 @@ numberOfDigitsInYuge
 
 (define kspn find-k-smallest-primes>n) ; abbreviation
 
+; This is a more general version of root-n-pred below, but not using it yet since prolly overkill for this.
 #; (define (predicted x1 y1 x2 proc) ; x1y1 is a pair, x2 an x-coord, return pair (x2 . y2)
   ; where y2 the result of applying proc to x1 and y1 (e.g., root(n) growth)
   (cons x2 (proc x1 y1 x2)))
@@ -380,18 +404,61 @@ numberOfDigitsInYuge
           (let* ([nt0 (car real-times)] [n0 (car nt0)] [t0 (cadr nt0)])
             (zip (map car real-times)
             (cons t0 (map (lambda (n1) (root-n-pred n0 t0 n1)) (map car (cdr real-times)))))))
-        
         (display "Expected times: ") (displayln expected-times)
         ))))
 
 ;; (prime-times)
 ; My machine gave this output:
-; Real times: ((1000 0.005289713541666667) (10000 0.013264973958333334) (1000000 0.11661783854166667))
-; Expected times: ((1000 0.005289713541666667) 0.016727542987989816 0.16727546055465234)
+; Real times: ((1000 0.004964192708333333) (10000 0.013346354166666666) (1000000 0.1142578125))
+; Expected times: ((1000 0.004964192708333333) (10000 0.01569815572719044) (1000000 0.1569815860589814))
 ; So for these cases the expected is diverging above the real value with the
 ; difference increasing as n gets larger.
 
+; End Ex 1.22
 ; *******************************************
+; Ex 1.23, smallest-divisor+ ; upgrade of smallest-divisor by omitting redundant test of evens > 2.
+
+; (find-divisor+ n test-divisor next-odd)
+(define (next-odd n) (+ n 1 (mod n 2))) ; add an extra 1 if n is odd (i.e., n (mod 2) = 1)
+
+(define (find-divisor+ n test-divisor) ; refactor of find-divisor; '+' b/c it will be an improvement, or at least one hopes.
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor+ n (next-odd test-divisor)))))
+
+(define (smallest-divisor+ n) ; refactor of smallest-divisor
+  (find-divisor+ n 2))
+
+(define (prime?+ n) (= (smallest-divisor+ n) n)) ; improved prime? proc
+
+(define (timed-prime-test+ n prime-proc?) ; More generic versions of the test functions which allow specifying prime-proc?
+  (newline)
+  (display n)
+  (start-prime-test+ n prime-proc?))
+
+(define (start-prime-test+ n prime-proc? [start-time (current-inexact-milliseconds)]) 
+  (when (prime-proc? n)
+      (report-prime (- (current-inexact-milliseconds) start-time))))
+
+(define (ex1.23 k n) ; run time tests on k primes larger than n
+  (let ([xs (kspn k n)]) ; Recall kspn is abbrev. for find-k-smallest-primes>n
+    (display "prime? times")
+    (map (λ (n) (timed-prime-test+ n prime?)) xs)
+    (display "\nprime?+ times")
+    (map (λ (n) (timed-prime-test+ n prime?+)) xs)
+    (void)))
+
+(define tpt timed-prime-test) ; abbreviations for testing
+(define tpt+ timed-prime-test+)
+(ex1.23 3 10000)
+
+; *******************************************
+; Ex 1.26
+
+
+
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
