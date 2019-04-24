@@ -295,8 +295,8 @@
           [(even? n) (fib-iter (T^2_01 ab) (halve n))]
           [else (T_01 (fib-iter (T^2_01 ab) (halve (-- n))))])))
 
-(println "First 10 fibonacci's:")
-(map fib-log (range 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
+;;(println "First 10 fibonacci's:")
+;;(map fib-log (range 1 11)) ; returns '(1 1 2 3 5 8 13 21 34 55)
 ;;; TODO: verify that my version is O(log n), and do the textbook version on p62.
 ; *******************************************
 ; Procs given on pp67-68:
@@ -540,10 +540,80 @@
     (apply-op-iter op id term a next b)))
 
 ; *******************************************
+; Ex 1.33 TODO
 ; *******************************************
+; Ex 1.34
+(define (F g) (g 2))
+; (F F) -> (F 2) -> (2 2), which says "apply the function 2 to input 2."
+; But 2 isn't a function, so it will crash.
+
 ; *******************************************
+; Sec 1.3.3, procs from book pp 90-92:
+(define EPSILON1.3.3 0.001) ; to easily change epsilon for experiments
+
+(define (search f neg-point pos-point)
+  (let ((midpoint (average neg-point pos-point)))
+    (if (close-enough? neg-point pos-point)
+        midpoint
+        (let ((test-value (f midpoint)))
+          (cond ((positive? test-value)
+                 (search f neg-point midpoint))
+                ((negative? test-value)
+                 (search f midpoint pos-point))
+                (else midpoint))))))
+
+(define (close-enough? x y)
+  (< (abs (- x y)) EPSILON1.3.3))
+
+(define (half-interval-method f a b)
+  (let ((a-value (f a))
+        (b-value (f b)))
+    (cond ((and (negative? a-value) (positive? b-value))
+           (search f a b))
+          ((and (negative? b-value) (positive? a-value))
+           (search f b a))
+          (else
+           (error "Values are not of opposite sign" a b)))))
+
+(define recip (λ (x) (/ 1 x))) ; recip = reciprocal
+
+(define tolerance 0.00001)
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
+
 ; *******************************************
+; Ex 1.35
+;; (fixed-point (λ (x) (+ 1 (recip x))) 1.0) ; => 1.6180327868852458
+
 ; *******************************************
+; Ex 1.36
+
+(define (fixed-point-with-proc f first-guess proc) ; pass in proc to tell it what to do each iteration, e.g., displaying intermediate results
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (begin
+            (proc next) ; side effect part
+            (try next)))))
+  (try first-guess))
+
+(define golden-ratio (λ (x) (+ 1 (recip x))))
+(define (print-val x)
+  (display x)
+  (newline))
+
+(displayln "Golden ratio with each approximation:")
+(fixed-point-with-proc golden-ratio 1.62 print-val) ; start with phi rounded to 3 sig figs, i.e., 1.62
 ; *******************************************
 ; *******************************************
 ; *******************************************
