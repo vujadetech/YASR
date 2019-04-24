@@ -442,24 +442,45 @@ numberOfDigitsInYuge
 
 (define (ex1.23 k n) ; run time tests on k primes larger than n
   (let ([xs (kspn k n)]) ; Recall kspn is abbrev. for find-k-smallest-primes>n
-    (display "prime? times")
+    (display "Prime? times")
     (map (λ (n) (timed-prime-test+ n prime?)) xs)
-    (display "\nprime?+ times")
+    (display "\nPrime?+ times")
     (map (λ (n) (timed-prime-test+ n prime?+)) xs)
     (void)))
 
 (define tpt timed-prime-test) ; abbreviations for testing
 (define tpt+ timed-prime-test+)
-(ex1.23 3 10000)
+;; (ex1.23 3 10000) ; My machine gave a speed improvement with the prime?+ version,
+; but not quite twice as fast, as was hoped. Occasionally it was slower which was weird. 
 
 ; *******************************************
-; Ex 1.26
-
-
-
-
-
+; Ex 1.24 TODO
 ; *******************************************
+; Ex 1.25 TODO
+; *******************************************
+; Ex 1.26-28 TODO (skipping to Section 1.3 for now).
+; *******************************************
+; SECTION 1.3
+; *******************************************
+; Ex 1.29 TODO
+; *******************************************
+; Ex 1.30, sum with iterative process
+
+; Original sum proc using a recursive process:
+(define (sum term a next b)
+  (if (> a b) 0
+      (+ (term a)
+         (sum term (next a) next b))))
+
+; sum-iter proc which refactors sum as an iterative process:
+(define (sum-iter term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (+ (term a) result))))
+  (iter a 0))
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
