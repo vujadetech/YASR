@@ -480,9 +480,56 @@ numberOfDigitsInYuge
         (iter (next a) (+ (term a) result))))
   (iter a 0))
 
+; Test on "precocious Gauss" example:
+; (sum-iter identity 1 ++ 100) ; => 5050
+; *******************************************
+; Ex 1.31 a, b
+; Recursive process first:
+; First, "genericize" to allow not just sum or product but other binary ops as well.
+
+(define (apply-op op id term a next b) ; pass in id as well (for identity relative to op). E.g. if op=*, id=1.
+  (if (> a b) id
+      (op (term a)
+         (apply-op op id term (next a) next b))))
+
+; apply-op-iter, iterative process version:
+(define (apply-op-iter op id term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (op (term a) result))))
+  (iter a id))
+
+; Now that the heavy lifting is done, product and fact are quite simple:
+(define (product a b) ; => a * (a+1) * ... * b
+  (apply-op * 1 identity a ++ b))
+(define (product-iter a b)
+  (apply-op-iter * 1 identity a ++ b))
+(define fact (λ (n) (product 1 n)))
+(define fact-iter (λ (n) (product-iter 1 n)))
+
+; Pi recursive approximation:
+(define (piOver8 cutoff) ; divide both sides by 2 first since single 2 in numerator is awkward
+  (sq (/ (apply-op * 1 identity 4 (λ (n) (+ n 2)) cutoff)
+         (apply-op * 1 identity 3 (λ (n) (+ n 2)) cutoff))))
+
+(define (Pi cutoff) ; cutoff determines how many terms are in the numerator and denominator products.
+  (/ (exact->inexact (* 8 (piOver8 cutoff))) cutoff))
+
+; Pi iter approximation:
+(define (piOver8-iter cutoff) ; divide both sides by 2 first since single 2 in numerator is awkward
+  (sq (/ (apply-op-iter * 1 identity 4 (λ (n) (+ n 2)) cutoff)
+         (apply-op-iter * 1 identity 3 (λ (n) (+ n 2)) cutoff))))
+
+(define (Pi-iter cutoff) ; cutoff determines how many terms are in the numerator and denominator products.
+  (/ (exact->inexact (* 8 (piOver8-iter cutoff))) cutoff))
+
+
+(display "Pi = ")
+(Pi-iter 1000) ; => 3.143...
 
 ; *******************************************
-; *******************************************
+; Ex 1.32
 ; *******************************************
 ; *******************************************
 ; *******************************************
