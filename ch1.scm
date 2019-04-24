@@ -118,8 +118,8 @@
     [(= y 1) 2]
     [else (A (- x 1) (A x (- y 1)))]))
 
-(println "Exercise 1.10, Ackermann values:")
-(list (A 1 10) (A 2 4) (A 3 3))
+;;(println "Exercise 1.10, Ackermann values:")
+;;(list (A 1 10) (A 2 4) (A 3 3))
 
 (define (f n) (A 0 n)) ; f(n) = 2*n
 (define (g n) (A 1 n)) ; g(n) = 2^n, where ^ is exponentiation
@@ -132,9 +132,9 @@
 
 (define yuge (h 5)) ; Unfortunately this number is still to small to adequately
 ; fund Trump's wall (ahem - Wall, or better yet 'big, beautiful Wall') in either pesos or US dollars.
-(define numberOfDigitsInYuge (length (string->list (number->string yuge))))
-(println "numberOfDigitsInYuge:")
-numberOfDigitsInYuge
+;;(define numberOfDigitsInYuge (length (string->list (number->string yuge))))
+;;(println "numberOfDigitsInYuge:")
+;;numberOfDigitsInYuge
 
 ; *******************************************
 ; Ex 1.11: recursive/iterative
@@ -158,11 +158,11 @@ numberOfDigitsInYuge
 (define (time-proc/1 proc n)
   (time (proc n)))
 
-(println "")
-(println "Time of running Ex 1.10 f-rec on n = 20")
-(time-proc/1 f-rec 20)
-(println "Time of running Ex 1.10 f-iter on n=1000:")
-(time-proc/1 f-iter 1000)
+;;(println "")
+;;(println "Time of running Ex 1.10 f-rec on n = 20")
+;;(time-proc/1 f-rec 20)
+;;(println "Time of running Ex 1.10 f-iter on n=1000:")
+;;(time-proc/1 f-iter 1000)
 ; Note that although both procedures are implemented recursively,
 ; the iterative process runs orders of magnitude faster than the recursive
 ; process, but no surprise there, right?
@@ -524,12 +524,21 @@ numberOfDigitsInYuge
 (define (Pi-iter cutoff) ; cutoff determines how many terms are in the numerator and denominator products.
   (/ (exact->inexact (* 8 (piOver8-iter cutoff))) cutoff))
 
-
-(display "Pi = ")
-(Pi-iter 1000) ; => 3.143...
+;;(display "Pi = ")
+;;(Pi-iter 1000) ; => 3.143...
 
 ; *******************************************
-; Ex 1.32
+; Ex 1.32 a (recursive), b (iterative)
+
+; We can use apply-op from 1.31 since it is doing the same thing with different names:
+(define (accumulate combiner null-value term a next b)
+  (let ([op combiner] [id null-value])
+    (apply-op op id term a next b)))
+
+(define (accumulate-iter combiner null-value term a next b)
+  (let ([op combiner] [id null-value])
+    (apply-op-iter op id term a next b)))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
