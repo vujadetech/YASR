@@ -20,6 +20,7 @@
 
 ; Some helper functions:
 (define mod remainder)
+(define negative (λ (x) (- 0 x)))
 (define (-- x) (- x 1))
 (define (++ x) (+ x 1))
 (define (non-empty-list? xs) (and (list? xs) (> (length xs) 0)))
@@ -608,12 +609,69 @@
   (try first-guess))
 
 (define golden-ratio (λ (x) (+ 1 (recip x))))
-(define (print-val x)
-  (display x)
-  (newline))
+(define (print-val x) (display x) (newline))
 
-(displayln "Golden ratio with each approximation:")
-(fixed-point-with-proc golden-ratio 1.62 print-val) ; start with phi rounded to 3 sig figs, i.e., 1.62
+;;(displayln "Golden ratio with each approximation:")
+;;(fixed-point-with-proc golden-ratio 1.62 print-val) ; start with phi rounded to 3 sig figs, i.e., 1.62
+; *******************************************
+; Ex 1.37 TODO verify cont-frac-fold and foldr since they're giving different answers than cont-frac for Ex 1.38
+
+(define (cont-frac n d k) ; n and d are functions, recursive process
+  (cond
+    [(= k 1) (/ (n 1) (d 1))]
+    [(> k 1) (/ (n 1) (+ (d 1) (cont-frac n d (-- k))))]))
+
+(define (cont-frac-rev n d k) ;
+  (cond
+    [(= k 1) (/ (n 1) (d 1))]
+    [(> k 1) (/ (n 1) (+ (d 1) (cont-frac n d (-- k))))]))
+
+(define (cont-frac-fold n d k) ; not good SE practice to put implementation in name, just for experimenting with a fold version
+  ; Assume k > 1 since cont fracs are superfluous otherwise.
+  (let* ([ks (reverse (range 1 (++ k)))] [ns (map n ks)] [ds (map d ks)] [xs (zip ns ds)])
+    ; xs is the set of ordered pairs x_i = (n_i, d_i) for i in [1..k]
+    (let* ([x1 (car xs)] [id-val (/ (fst x1) (snd x1))])
+      (fold (λ (x y) (/ (fst x) (+ (snd x) y))) id-val (cdr xs)))))
+
+(define (cont-frac-foldr n d k)
+  (let* ([ks (range 1 (++ k))] [ns (map n ks)] [ds (map d ks)] [xs (zip ns ds)])
+    ; xs is the set of ordered pairs x_i = (n_i, d_i) for i in [1..k]
+    (fold-right (λ (x y) (/ (fst x) (+ (snd x) y))) 0 xs)))
+
+(define one (λ (_) 1.0)) ; constant function 1
+
+(define golden-ratio-cont-frac (λ (k) (cont-frac one one k)))
+
+; *******************************************
+; Ex 1.38
+(define (d_e i) ; denominator function for euler's e
+  (if (divides? 3 (++ i))
+      (* (++ i) (/ 2 3))
+      1))
+                          
+(define e-2 (λ (cont-frac-proc k) (cont-frac-proc one d_e k)))
+
+;; (e-2 cont-frac 100) ; => 0.6180339887498948
+
+; *******************************************
+; Ex 1.39 TODO Find out why this isn't working with cont-frac
+#;(define (powers x k) ; => '(x^0 x^1 x^2 ... x^k)
+  (map (λ (k) (expt x k)) (range 0 (++ k))))
+
+(define nth-odd ; return nth odd number starting at 1; e.g. nth-odd(4) = 7
+  (λ (n) (+ 1 (* 2 (-- n)))))
+
+(define nums (λ (x i) (if (= i 1) x (negative (sq x)))))
+(define numsh (λ (x i) (if (= i 1) x (sq x)))) ; Numerators for tanh, hyperbolic tangent
+
+(define (tan-cf cont-frac-proc x k) ; extra parameter cont-frac-proc to allow using different cont frac implementations
+  (let ([d nth-odd])
+    (cont-frac-proc (λ (i) (nums x i)) d k)))
+
+(define (tanh-cf cont-frac-proc x k) 
+  (let ([d nth-odd])
+    (cont-frac-proc (λ (i) (numsh x i)) d k)))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
@@ -626,23 +684,7 @@
 ; *******************************************
 ; *******************************************
 ; *******************************************
+; *******************************************(
 ; *******************************************
 ; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
-; *******************************************
+
