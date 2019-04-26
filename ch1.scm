@@ -616,15 +616,17 @@
 ; *******************************************
 ; Ex 1.37 TODO verify cont-frac-fold and foldr since they're giving different answers than cont-frac for Ex 1.38
 
-(define (cont-frac n d k) ; n and d are functions, recursive process
+#;(define (cont-frac n d k) ; n and d are functions, recursive process
   (cond
     [(= k 1) (/ (n 1) (d 1))]
     [(> k 1) (/ (n 1) (+ (d 1) (cont-frac n d (-- k))))]))
 
-(define (cont-frac-rev n d k) ;
-  (cond
-    [(= k 1) (/ (n 1) (d 1))]
-    [(> k 1) (/ (n 1) (+ (d 1) (cont-frac n d (-- k))))]))
+(define (cont-frac n d k) (cont-frac-range n d 1 k)) ; Using cont-frac-range helper function
+
+(define (cont-frac-range n d i j) ; cont-frac for range [i..j] only
+  (if (= i j)
+      (/ (n j) (d j))
+      (/ (n i) (+ (d i) (cont-frac-range n d (++ i) j)))))
 
 (define (cont-frac-fold n d k) ; not good SE practice to put implementation in name, just for experimenting with a fold version
   ; Assume k > 1 since cont fracs are superfluous otherwise.
@@ -654,24 +656,44 @@
 ;; (e-2 cont-frac 100) ; => 0.6180339887498948
 
 ; *******************************************
-; Ex 1.39 TODO Find out why this isn't working with cont-frac
+; Ex 1.39 TODO This is working with cont-frac, so fix the folds
 #;(define (powers x k) ; => '(x^0 x^1 x^2 ... x^k)
   (map (λ (k) (expt x k)) (range 0 (++ k))))
 
 (define nth-odd ; return nth odd number starting at 1; e.g. nth-odd(4) = 7
   (λ (n) (+ 1 (* 2 (-- n)))))
 
-(define nums (λ (x i) (if (= i 1) x (negative (sq x)))))
-(define numsh (λ (x i) (if (= i 1) x (sq x)))) ; Numerators for tanh, hyperbolic tangent
+(define nums
+  (λ (x)
+    (λ (i) (if (= i 1) x (negative (sq x))))))
+(define numsh
+  (λ (x)
+    (λ (i) (if (= i 1) x (sq x))))) ; Numerators for tanh, hyperbolic tangent
 
 (define (tan-cf cont-frac-proc x k) ; extra parameter cont-frac-proc to allow using different cont frac implementations
   (let ([d nth-odd])
-    (cont-frac-proc (λ (i) (nums x i)) d k)))
+    (cont-frac-proc (nums x) d k)))
 
 (define (tanh-cf cont-frac-proc x k) 
   (let ([d nth-odd])
     (cont-frac-proc (λ (i) (numsh x i)) d k)))
 
+(define (residuals xs mus) ; => (x_1 - mu_1, ...)
+  (let ([pairs (zip xs mus)])
+    (map (λ (pair) (- (fst pair) (snd pair))) pairs)))
+
+(define (tan-cf-1to5-k20 cont-frac-proc)
+  (map (λ (x) (tan-cf cont-frac-proc x 20)) (range 1.0 5.0)))
+
+(define tan-cfs (tan-cf-1to5-k20 cont-frac))
+
+;;(residuals tan-cfs (map tan (range 1 5))) ; => (-2.220446049250313e-16 0.0 5.551115123125783e-17 -2.220446049250313e-16)
+; Residuals are in the range of 10^-16 for this small test set, so it appears to be working and accurate for k=20.
+
+; *******************************************
+
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
@@ -684,7 +706,12 @@
 ; *******************************************
 ; *******************************************
 ; *******************************************
-; *******************************************(
 ; *******************************************
 ; *******************************************
 
+(define minus-curried
+  (λ (a)
+    (λ (b) (- a b))))
+
+(define minus-NOT-curried
+  (λ (a b) (- a b)))
