@@ -8,7 +8,7 @@
      (let ([count (ceiling (/ (- stop start) step))])
        (iota count start step))]
     [(start stop) (range start stop 1)] ; Return list of integers in interval  [start, stop).
-    [(stop) (range 0 stop)])) ; Return list of integers in interval [0, stop).
+    [(stop) (range 0 stop)])) ; Return list of integers in interval [0, stop)
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
@@ -19,6 +19,10 @@
 (define sq square) ; sq is an abbreviation of square for Mr. Lazybone's over here, i.e., "Yours truly"
 
 ; Some helper functions:
+(define (range-fixed a b k) ; => '(a+k, a+2k, ... , b-k, b)
+  (let ([step (/ (- b a) k)])
+    (range a (+ b step) step)))
+  
 (define mod remainder)
 (define negative (λ (x) (- 0 x)))
 (define (-- x) (- x 1))
@@ -657,16 +661,20 @@
 
 ; *******************************************
 ; Ex 1.39 TODO This is working with cont-frac, so fix the folds
+(define K 10) ; upper bound K for # of continued fraction iterations
+(define piOver2 (/ pi 2))
+(define piOver4 (/ piOver2 2))
+
 #;(define (powers x k) ; => '(x^0 x^1 x^2 ... x^k)
   (map (λ (k) (expt x k)) (range 0 (++ k))))
 
 (define nth-odd ; return nth odd number starting at 1; e.g. nth-odd(4) = 7
   (λ (n) (+ 1 (* 2 (-- n)))))
 
-(define nums
+(define nums ; numerators for tan
   (λ (x)
     (λ (i) (if (= i 1) x (negative (sq x))))))
-(define numsh
+(define numsh ; numerators for tanh
   (λ (x)
     (λ (i) (if (= i 1) x (sq x))))) ; Numerators for tanh, hyperbolic tangent
 
@@ -682,6 +690,9 @@
   (let ([pairs (zip xs mus)])
     (map (λ (pair) (- (fst pair) (snd pair))) pairs)))
 
+(define (residuals-funcs f g xs) ; => (f(x_1) - g(x_1), ...), i.e., the residuals of f applied to xs and g applied to xs
+  (residuals (map f xs) (map g xs)))
+
 (define (tan-cf-1to5-k20 cont-frac-proc)
   (map (λ (x) (tan-cf cont-frac-proc x 20)) (range 1.0 5.0)))
 
@@ -690,10 +701,11 @@
 ;;(residuals tan-cfs (map tan (range 1 5))) ; => (-2.220446049250313e-16 0.0 5.551115123125783e-17 -2.220446049250313e-16)
 ; Residuals are in the range of 10^-16 for this small test set, so it appears to be working and accurate for k=20.
 
+(define tan-residuals-100 (residuals-funcs tan (λ (x) (tan-cf cont-frac x K)) (range-fixed (negative piOver4) piOver4 100)))
+
+;; (display "Mean of errors for tan vs tan-cf for 100 values in [-Pi/4, Pi/4]: ") (mean tan-residuals-100)
+
 ; *******************************************
-
-
-
 ; *******************************************
 ; *******************************************
 ; *******************************************
