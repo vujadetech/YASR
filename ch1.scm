@@ -30,7 +30,7 @@
 (define (non-empty-list? xs) (and (list? xs) (> (length xs) 0)))
 (define (singleton-list? xs) (and (non-empty-list? xs) (= (length xs) 1)))
 (define (halve x) (/ x 2))
-(define (double x) (* x 2))
+;(define (double x) (* x 2))
 (define (fst xs) (car xs))
 (define (snd xs) (cadr xs))
 (define (zero? x) (= x 0))
@@ -625,12 +625,28 @@
     [(= k 1) (/ (n 1) (d 1))]
     [(> k 1) (/ (n 1) (+ (d 1) (cont-frac n d (-- k))))]))
 
-(define (cont-frac n d k) (cont-frac-range n d 1 k)) ; Using cont-frac-range helper function
+(define (cont-frac n d k)
+  (cont-frac-range n d 1 k)) ; Using cont-frac-range helper function
 
 (define (cont-frac-range n d i j) ; cont-frac for range [i..j] only
   (if (= i j)
       (/ (n j) (d j))
       (/ (n i) (+ (d i) (cont-frac-range n d (++ i) j)))))
+
+(define (rotate f a b) ; returns a function g s.t. g(a) = f(b), g(a+1) = f(b-1), ...
+  (let ([mu (average a b)])
+    (λ(x)
+      (if (< x mu)
+          (f (+ x (* 2 (abs (- mu x)))))
+          (f (- x (* 2 (abs (- mu x)))))))))
+
+(define (cont-frac-desc-helper n d k)
+  (if (= k 0)
+      0
+      (/ (n k) (+ (d k) (cont-frac-desc-helper n d (-- k))))))
+
+(define (cont-frac-desc n d k)
+  (cont-frac-desc-helper (rotate n 1 k) (rotate d 1 k) k))
 
 (define (cont-frac-fold n d k) ; not good SE practice to put implementation in name, just for experimenting with a fold version
   ; Assume k > 1 since cont fracs are superfluous otherwise.
@@ -661,7 +677,8 @@
 
 ; *******************************************
 ; Ex 1.39 TODO This is working with cont-frac, so fix the folds
-(define K 10) ; upper bound K for # of continued fraction iterations
+(define K 3) ; upper bound K for # of continued fraction iterations
+(define piDenom 3.9)
 (define piOver2 (/ pi 2))
 (define piOver4 (/ piOver2 2))
 
@@ -690,8 +707,11 @@
   (let ([pairs (zip xs mus)])
     (map (λ (pair) (- (fst pair) (snd pair))) pairs)))
 
-(define (residuals-funcs f g xs) ; => (f(x_1) - g(x_1), ...), i.e., the residuals of f applied to xs and g applied to xs
-  (residuals (map f xs) (map g xs)))
+(define (residuals-abs xs mus) ; take abs value of each residual
+  (map abs (residuals xs mus)))
+
+(define (residuals-funcs-abs f g xs) ; => ( |f(x_1) - g(x_1)|, ...), i.e., the residuals-abs of f applied to xs and g applied to xs
+  (residuals-abs (map f xs) (map g xs)))
 
 (define (tan-cf-1to5-k20 cont-frac-proc)
   (map (λ (x) (tan-cf cont-frac-proc x 20)) (range 1.0 5.0)))
@@ -701,20 +721,73 @@
 ;;(residuals tan-cfs (map tan (range 1 5))) ; => (-2.220446049250313e-16 0.0 5.551115123125783e-17 -2.220446049250313e-16)
 ; Residuals are in the range of 10^-16 for this small test set, so it appears to be working and accurate for k=20.
 
-(define tan-residuals-100 (residuals-funcs tan (λ (x) (tan-cf cont-frac x K)) (range-fixed (negative piOver4) piOver4 100)))
+(define tan-residuals-100 (residuals-funcs-abs tan (λ (x) (tan-cf cont-frac x K)) (range-fixed (negative (/ pi piDenom)) (/ pi piDenom) 100)))
 
-;; (display "Mean of errors for tan vs tan-cf for 100 values in [-Pi/4, Pi/4]: ") (mean tan-residuals-100)
+;;(display (format "Mean of errors for tan vs tan-cf for 100 values in [-Pi/~a, Pi/~a] with k=~a: " piDenom piDenom K)) (mean tan-residuals-100)
+
+; *******************************************
+; Sec 1.3.4
+
+(define (average-damp f)
+  (lambda (x) (average x (f x))))
+
+(define (sqrt_fp-ad x) ; sqrt using fixed-point and average-damp
+  (fixed-point (average-damp (lambda (y) (/ x y)))
+               1.0))
+
+(define (cube-root x)
+  (fixed-point (average-damp (lambda (y) (/ x (square y))))
+               1.0))
+
+(define (deriv g)
+  (lambda (x)
+    (/ (- (g (+ x dx)) (g x))
+       dx)))
+(define dx 0.00001)
+
+(define (newton-transform g)
+  (lambda (x)
+    (- x (/ (g x) ((deriv g) x)))))
+
+(define (newtons-method g guess)
+  (fixed-point (newton-transform g) guess))
 
 ; *******************************************
 ; *******************************************
 ; *******************************************
+; Ex 1.40, cubic TODO
+#;(define (cubic a b c)
+  (λ (x y) (+ (negative y) (cube x) (* a (sq x)))))
 ; *******************************************
+; Ex 1.41, double
+(define (double f) (λ (x) (f (f x))))
+
 ; *******************************************
+; Ex 1.42, compoze 
+(define (compoze f g) ; compose is already taken in this namespace
+  (λ (x) (f (g x))))
+
 ; *******************************************
+; Ex 1.43
+(define (repeated f n)
+  (if (= n 1)
+      f ; base case, f applied once is just f
+      (compoze (repeated f (-- n)) f))) ; compoze f^(n-1) with f to get f^n
 ; *******************************************
+; Ex 1.44, smooth
+; N.B. Haven't tested these yet, graphics would be ideal to see the smoothing change the original function
+(define (smooth f)
+  (λ (x) (mean (list (f (- x dx)) (f x) (f (+ x dx))))))
+
+(define (smooth-n-fold f n)
+  (if (= n 1)
+      (smooth f)
+      (smooth (repeated (smooth f) (-- n)))))
+
 ; *******************************************
+; Ex 1.45 TODO
 ; *******************************************
-; *******************************************
+; Ex 1.46 TODO
 ; *******************************************
 ; *******************************************
 ; *******************************************
