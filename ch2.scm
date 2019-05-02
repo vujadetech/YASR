@@ -11,7 +11,8 @@
 (define (range-fixed a b k) ; => '(a+k, a+2k, ... , b-k, b)
   (let ([step (/ (- b a) k)])
     (range a (+ b step) step)))
-  
+
+(define 1/ (λ (x) (/ 1 x)))
 (define mod remainder)
 (define negative (λ (x) (- 0 x)))
 (define (-- x) (- x 1))
@@ -40,12 +41,37 @@
 ; *******************************************
 ; *******************************************
 ; *******************************************
+; Ex 2.4
+(define (Cons x y) ; Use upper case so default cons is unaffected
+  (λ (m) (m x y)))
+
+(define (Car z) (z (λ (p q) p))) ; Use uppercase so that default car and cdr are unaffected
+(define (Cdr z) (z (λ (p q) q)))
+
+(define (List x . xs) ; List datatype using this implementation; not mentioned in book, just for fun
+ ; (if (empty? xs)    (Cons x '()) (Cons x (Cons (Car xs)
+  (cond
+    [(null? x) '()]
+    [(empty? xs) (Cons x '())]
+    [else (Cons x (List (Car xs) . (Cdr xs)))]))
+
+(define (display-List xs)
+  ;(cond
+  ;  [(empty? xs) (display '())]
+  (unless (empty? xs)
+    (begin
+       (display (Car xs)) (display ", ")
+       (display-List (Cdr xs)))))
+
+(define xs24 (Cons 1 (Cons 2 (Cons 3 '()))))
+;; (Car xs24) ; => 1
+;; (display-List (Cdr xs24)) ; => 2, 3,
 ; *******************************************
 ; Ex 2.5
 (define (multiplicity p n) ; => multiplicity of prime factor p of n
   (if (divides? p n) (++ (multiplicity p (/ n p))) 0))
 
-(define (conz a b) ; cons already in namespace of course, so call it conz. Also b/c I'm a bad spellir.
+(define (kons a b) ; Change name from cons b/c of namespace clash like in 2.4 (and ditto for car, cdr)
   (* (expt 2 a) (expt 3 b)))
 
 (define (kar p) (multiplicity 2 p))
@@ -72,13 +98,12 @@
   (λ (f)
     (λ (x) ((n1 f) ((n2 f) x)))))
 
+; A few extras for experimenting:
 (define three (add one two)) ; (three f) is function f iterated 3 times
-(define five (add two three))
+(define four (add one three))
+(define five (add one four))
 
 ; (((add two two) sq) 3) => 43046721 since ((add two two) sq) means apply sq 4 times => (sq(sq(sq(sq 3)))) = 43046721
-
-;(define ChurchOne (add-1 zero))
-;(define ChurchTwo (add-1 (add-1 zero)))
 
 ; (map (zero sq) (range 1 5)) ; => '(1 2 3 4) since (zero sq) is just the identity; would be the same for any other function besides sq
 
