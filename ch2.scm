@@ -209,6 +209,16 @@
   (reverse (iter items nil)))
 
 ; *******************************************
+; Ex 2.23, vujadeTech-for-each since for-each is in namespace
+(define (vujadeTech-for-each proc xs)
+  (unless (empty? xs)
+    (begin
+      (proc (car xs))
+      (vujadeTech-for-each proc (cdr xs)))))
+
+;; (vujadeTech-for-each (λ (x) (newline) (display x)) (list 57 321 88))
+ 
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
