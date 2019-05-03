@@ -6,6 +6,8 @@
 
 (define xs '(42 99 7))    ; for testing
 (define (sq x) (* x x))
+(define square sq)
+(define nil null)
 
 ; Some helper functions:
 (define (range-fixed a b k) ; => '(a+k, a+2k, ... , b-k, b)
@@ -193,7 +195,19 @@
 ;; (apply same-parity (range 1 8)) ; => '(1 3 5 7)
 ;; (apply same-parity (range 2 8)) ; => '(2 4 6)
 ; *******************************************
+; Ex 2.21 TODO
 ; *******************************************
+; Ex 2.22
+(define (square-list items)
+  (define (iter things answer)
+    (if (null? things)
+        answer
+        (iter (cdr things) 
+              (cons (square (car things))
+                    answer))))
+  ; To deal with the result being reversed, just reverse it before returning:
+  (reverse (iter items nil)))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
