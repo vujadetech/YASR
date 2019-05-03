@@ -36,7 +36,10 @@
 (define (mean xs) (/ (apply + xs) (length xs))) ; arithmetic mean
 (define (decades n) (map (lambda (n) (expt 10 n)) (range 0 n))) ; useful for checking O(f(n)) growth, e.g. in prime testing problems
 (define (divides? a b) (= (remainder b a) 0))
-
+(define (init xs) ; assume xs non-empty since init is meaningless otherwise
+  (if (empty? (cdr xs))
+      '()
+      (cons (car xs) (init (cdr xs)))))
 
 ; *******************************************
 ; *******************************************
@@ -142,8 +145,14 @@
       (last-pair (cdr xs))))
 
 ;; (last-pair (list 23 72 149 34)) ; => '(34)
-
 ; *******************************************
+; Ex 2.18
+(define (vujadeTech-reverse xs) ; reverse is already in #racket namespace so indulging in some shameless self-promotion.
+  (if (or (empty? xs) (empty? (cdr xs)))
+      xs
+      (append (last-pair xs) (vujadeTech-reverse (init xs)))))
+       
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
