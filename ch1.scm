@@ -325,7 +325,7 @@
         ((fermat-test n) (fast-prime? n (- times 1)))
         (else false)))
 
-; *******************************************
+; ******************************************
 ; Ex 1.21, smallest-divisor
 
 (define (smallest-divisor n)
@@ -393,12 +393,10 @@
 ; Apropos that, this code could use a refactoring as it's currently a bigger trainwreck than Phillip from a season of Survivor a few years ago.
   (let* ([k 3] [primes1000 (kspn k 1000   )]
                [primes10k  (kspn k 10000  )]
-               [primes1mil (kspn k 1000000)]
-               )
+               [primes1mil (kspn k 1000000)])
     (let ([times1000 (map cdr (map (lambda (p) (time-ms prime? p)) primes1000))]
           [times10k (map cdr (map (lambda (p) (time-ms prime? p)) primes10k))]
-          [times1mil (map cdr (map (lambda (p) (time-ms prime? p)) primes1mil))]
-          )
+          [times1mil (map cdr (map (lambda (p) (time-ms prime? p)) primes1mil))])
       (let ([real-times (list (list 1000 (mean times1000))
                               (list 10000 (mean times10k))
                               (list 1000000 (mean times1mil))

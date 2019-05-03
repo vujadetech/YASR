@@ -48,12 +48,14 @@
 (define (Car z) (z (λ (p q) p))) ; Use uppercase so that default car and cdr are unaffected
 (define (Cdr z) (z (λ (p q) q)))
 
-(define (List x . xs) ; List datatype using this implementation; not mentioned in book, just for fun
+#; (define (List x . xs) ; List datatype using this implementation; not mentioned in book, just for fun
+     ; Couldn't get this working yet
  ; (if (empty? xs)    (Cons x '()) (Cons x (Cons (Car xs)
   (cond
-    [(null? x) '()]
+    ;[(null? x) '()]
     [(empty? xs) (Cons x '())]
-    [else (Cons x (List (Car xs) . (Cdr xs)))]))
+;    [else (Cons x (List (Car xs) (Cdr xs)))]))
+    [else (Cons x (apply List (Cdr xs)))]))
 
 (define (display-List xs)
   ;(cond
@@ -85,11 +87,7 @@
 (define (add-1 n)
   (λ (f)
     (λ (x) (f ((n f) x)))))
-; e.g., (add-1 sq) => 
 
-;(λ (f) (λ (x) (f ((zero f) x))))
-;(λ (f) (λ (x) (f (identity x))))
-;(λ (f) (λ (x) (f x)))
 (define one (λ (f) (λ (x) (f x))))
 ;; ((one sq) 3) => (sq 3) => 9
 (define two (λ (f) (λ (x) (f (f x)))))
@@ -111,8 +109,40 @@
   ; using Z for zero and a tick mark added for each value above zero, e.g. ChurchTwo => Z'', so it's a type of unary notation
  
 ; *******************************************
+; Sec 2.1.4
+
+#;(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+
+#;(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+#;(define (div-interval x y)
+  (mul-interval x 
+                (make-interval (/ 1.0 (upper-bound y))
+                               (/ 1.0 (lower-bound y)))))
+
 ; *******************************************
+; TODO: interval problems 2.7-2.16
 ; *******************************************
+; Sec 2.2
+(define (make-interval x y) "TODO")
+
+; *******************************************
+; Ex 2.17
+(define (last-pair xs) ; 
+  (if (empty? (cdr xs))
+      xs
+      (last-pair (cdr xs))))
+
+;; (last-pair (list 23 72 149 34)) ; => '(34)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
