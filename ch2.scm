@@ -151,9 +151,34 @@
   (if (or (empty? xs) (empty? (cdr xs)))
       xs
       (append (last-pair xs) (vujadeTech-reverse (init xs)))))
-       
 
 ; *******************************************
+; 2.19
+(define us-coins (list 50 25 10 5 1))
+(define uk-coins (list 100 50 20 10 5 2 1 0.5))
+
+(define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (no-more? coin-values)) 0)
+        (else
+         (+ (cc amount
+                (except-first-denomination coin-values))
+            (cc (- amount
+                   (first-denomination coin-values))
+                coin-values)))))
+
+(define first-denomination car)
+(define except-first-denomination cdr)
+(define no-more? empty?)
+
+;; (cc 100 us-coins) ; => 292
+(define cc-100-us-all-perms ; calculate cc 100 for every permuation of us-coins
+  (map (λ (coins-perm) (cc 100 coins-perm)) (permutations us-coins)))
+(apply max cc-100-us-all-perms) ; => 292
+(apply min cc-100-us-all-perms) ; => 292
+; max and min are both 292, so every cc 100 for every us-coins permuation is 292.
+; More generally, cc doesn't depend on the order since the else clause does a brute
+; force search by considering both cases: including the first denom or not, regardless of its amount. 
 ; *******************************************
 ; *******************************************
 ; *******************************************
