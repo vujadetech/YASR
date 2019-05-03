@@ -174,12 +174,24 @@
 ;; (cc 100 us-coins) ; => 292
 (define cc-100-us-all-perms ; calculate cc 100 for every permuation of us-coins
   (map (λ (coins-perm) (cc 100 coins-perm)) (permutations us-coins)))
-(apply max cc-100-us-all-perms) ; => 292
-(apply min cc-100-us-all-perms) ; => 292
+;;(apply max cc-100-us-all-perms) ; => 292
+;;(apply min cc-100-us-all-perms) ; => 292
 ; max and min are both 292, so every cc 100 for every us-coins permuation is 292.
 ; More generally, cc doesn't depend on the order since the else clause does a brute
 ; force search by considering both cases: including the first denom or not, regardless of its amount. 
 ; *******************************************
+; Ex 2.20, dotted-tail notation
+(define (same-parity x0 . xs)
+  (if (empty? xs) (list x0) ; handle trivial case
+      (let ([keep? (λ (x) (even? (- x0 x)))] ; keep?(x) iff x0-x is even, which means x0 and x have the same parity
+            [x1 (car xs)]) 
+        (if (keep? x1)
+           ; (cons x0 (cons x1 (same-parity x1 (cdr xs))))
+            (cons x0 (apply same-parity (cons x1 (cdr xs))))
+            (apply same-parity (cons x0 (cdr xs)))))))
+
+;; (apply same-parity (range 1 8)) ; => '(1 3 5 7)
+;; (apply same-parity (range 2 8)) ; => '(2 4 6)
 ; *******************************************
 ; *******************************************
 ; *******************************************
