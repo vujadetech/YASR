@@ -218,10 +218,31 @@
 
 ;; (vujadeTech-for-each (λ (x) (newline) (display x)) (list 57 321 88))
  
+; *******************************************
+; Sec 2.2.2
+(define (count-leaves x)
+  (cond ((null? x) 0)  
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+
+(define tree1 (cons (list 1 2) (list 3 4)))
 
 ; *******************************************
+; Ex 2.24-2.26: TODO
 ; *******************************************
-; *******************************************
+; Ex 2.27
+(define (deep-reverse xss) ; xss can be a list of xs, that is a list of lists, as well as an ordinary list.
+  (cond
+    [(null? xss) null]
+    [(not (pair? (car xss))) (append (deep-reverse (cdr xss)) (list (car xss)))]
+    
+   ;  [else (append (deep-reverse (cdr xss)) (deep-reverse (car xss)))]))
+   ; [else (cons (deep-reverse (cdr xss)) (deep-reverse (car xss)))]))
+    [else (append (deep-reverse (cdr xss)) (list (deep-reverse (car xss))))]))
+    
+;; (deep-reverse '( (1 2) (3 4) )) ; => ((4 3) (2 1))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
