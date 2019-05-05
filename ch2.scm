@@ -1,4 +1,5 @@
 #lang racket
+(require srfi/1)
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
@@ -10,6 +11,8 @@
 (define nil null)
 
 ; Some helper functions:
+(define (powers x k) ; => '(x^0 x^1 x^2 ... x^k)
+  (map (λ (k) (expt x k)) (range 0 (++ k))))
 (define (range-fixed a b k) ; => '(a+k, a+2k, ... , b-k, b)
   (let ([step (/ (- b a) k)])
     (range a (+ b step) step)))
@@ -424,7 +427,7 @@
                       (enumerate-tree (cdr tree))))))
 
 ; *******************************************
-; 2.33, put on your big boy pants, we're gettin' ready to do some functional programming.
+; Ex 2.33, put on your big boy pants, we're gettin' ready to do some functional programming.
 ; Sure we've been gettin' a little "funcy" so far, but
 ; defining our own versions of map, append, length - people if that ain't functional programming,
 ; I don't know what is!
@@ -438,6 +441,26 @@
   (accumulate (λ (x y) (+ 1 y)) 0 sequence))
 
 ; *******************************************
+; Ex 2.34
+(define (horner-eval x coefficient-sequence)
+  (accumulate
+   (lambda (this-coeff higher-terms)
+     (+ this-coeff (* x higher-terms)))
+   0
+   coefficient-sequence))
+
+(define coeffs (list 1 3 0 5 0 1))
+(horner-eval 2 coeffs) ; 1 + 3x ... for x=2 ; => 79
+(define 2s (powers 2 5))
+(dot-product 2s coeffs) ; => 79
+
+(define (dot-product xs ys) ; for testing horner-eval
+  (let ([zs (map (λ (z) (apply * z)) (zip xs ys))])
+    (accumulate
+     (λ (z w) (+ z w))
+     0
+     zs)))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
