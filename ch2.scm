@@ -254,7 +254,7 @@
     [else (append (fringe (car t)) (fringe (cdr t)))]))
 
 ; *******************************************
-; Ex 2.29, this is obviously too complicated, could be the agent orange of code smells
+; Ex 2.29, this is obviously too complicated, could be the agent orange of code smells.
 ; I mean I heard mobile programming is hard, but this is ridiculous. HEY-oh!
 
 (define (make-mobile left right) ; left and right are branches
@@ -350,15 +350,35 @@
       #t
       (mobile-is-balanced? (branch-structure b)))) ; b is a branch so it's branch-structure is a mobile
       
-(mobile-is-balanced? m1) ; => #t
-(mobile-is-balanced? m2) ; => #f
-(mobile-is-balanced? M1) ; => #t
-(mobile-is-balanced? M2) ; => #t
+;;(mobile-is-balanced? m1) ; => #t
+;;(mobile-is-balanced? m2) ; => #f
+;;(mobile-is-balanced? M1) ; => #t
+;;(mobile-is-balanced? M2) ; => #t
 
 ; d. TODO
 ; Skipping part d for now since I'm a bit "mobiled out" at this point.
 
 ; *******************************************
+; Ex 2.30
+
+(define (square-tree tree)
+  (cond ((null? tree) nil)
+        ((leaf? tree) (sq tree))
+        (else (cons (square-tree (car tree))
+                    (square-tree (cdr tree))))))
+
+(square-tree (list 1 (list 2 (list 3 4) 5) (list 6 7)))
+            
+(define (square-tree-map tree)
+  (map (lambda (sub-tree)
+         (if (not (leaf? sub-tree))
+             (square-tree-map sub-tree)
+             (sq sub-tree)))
+       tree))
+
+(square-tree-map (list 1 (list 2 (list 3 4) 5) (list 6 7)))
+   
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
