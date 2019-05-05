@@ -398,7 +398,45 @@
         (append rest (map (λ (x) (cons (car s) x)) rest)))))
 
 ; *******************************************
+; Sec 2.2.3
+(define (filter_ predicate sequence) ; filter already in namespace
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+         (cons (car sequence)
+               (filter_ predicate (cdr sequence))))
+        (else (filter_ predicate (cdr sequence)))))
+
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ low 1) high))))
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append (enumerate-tree (car tree))
+                      (enumerate-tree (cdr tree))))))
+
 ; *******************************************
+; 2.33, put on your big boy pants, we're gettin' ready to do some functional programming.
+; Sure we've been gettin' a little "funcy" so far, but
+; defining our own versions of map, append, length - people if that ain't functional programming,
+; I don't know what is!
+; ... deep breath ... calm blue oceans
+
+(define (map-vujadeTech p sequence) ; map already in namespace, ditto for append and length below
+  (accumulate (lambda (x y) (p x y)) nil sequence))
+(define (append-vujadeTech seq1 seq2)
+  (accumulate cons seq2 seq1))
+(define (length-vujadeTech sequence)
+  (accumulate (λ (x y) (+ 1 y)) 0 sequence))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
