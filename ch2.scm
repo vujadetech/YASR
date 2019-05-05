@@ -236,15 +236,128 @@
   (cond
     [(null? xss) null]
     [(not (pair? (car xss))) (append (deep-reverse (cdr xss)) (list (car xss)))]
-    
-   ;  [else (append (deep-reverse (cdr xss)) (deep-reverse (car xss)))]))
-   ; [else (cons (deep-reverse (cdr xss)) (deep-reverse (car xss)))]))
     [else (append (deep-reverse (cdr xss)) (list (deep-reverse (car xss))))]))
     
 ;; (deep-reverse '( (1 2) (3 4) )) ; => ((4 3) (2 1))
 
 ; *******************************************
+; Ex 2.28
+; First some tree-oriented helpers:
+(define empty-tree? null?)
+(define empty-tree '())
+(define (leaf? t) (not (pair? t)))
+
+(define (fringe t)
+  (cond
+    [(empty-tree? t) empty-tree]
+    [(leaf? (car t)) (cons (car t) (fringe (cdr t)))]
+    [else (append (fringe (car t)) (fringe (cdr t)))]))
+
 ; *******************************************
+; Ex 2.29, this is obviously too complicated, could be the agent orange of code smells
+; I mean I heard mobile programming is hard, but this is ridiculous. HEY-oh!
+
+(define (make-mobile left right) ; left and right are branches
+  (list left right))
+
+(define (make-branch length structure) ; length is any number, structure is either a num (for weight) or another mobile
+  (list length structure))
+
+; a.
+(define (left-branch mobile) (car mobile))
+(define (right-branch mobile) (cadr mobile))
+
+(define (branch-length branch) (car branch))
+(define (branch-structure branch) (cadr branch))
+
+; b.
+(define (total-weight-of-structure structure) ; structure could be number or mobile
+  (if (number? structure)
+      structure
+      (+ (total-weight-of-structure (left-branch structure))
+         (total-weight-of-structure (right-branch structure)))))
+
+(define (total-weight-of-branch b)
+  (if (number? (branch-structure b))
+      (branch-structure b)
+      (total-weight (branch-structure b))))
+
+(define (total-weight m) ; m is the mobile
+  (let ([left (left-branch m)] [right (right-branch m)])
+    (let ([left-structure (branch-structure left)]
+          [right-structure (branch-structure right)])
+      (+ (total-weight-of-structure left-structure)
+         (total-weight-of-structure right-structure)))))
+
+#; (define (total-weight-generic x) ; returns weight whether x is a branch or a mobile
+  (if (number)))
+
+(define b1 (make-branch 2 5))
+(define b2 (make-branch 1 10))
+(define m1 (make-mobile b1 b2)) ; mobile is balanced, weight = 15
+(define b3 (make-branch 4 3))   ; torque = 12
+(define b4 (make-branch 4 m1))  ; torque = 60
+(define m2 (make-mobile b3 b4)) ; mobile is UNbalanced b/c torque of each branch differs
+
+(define B1 (make-branch 2 10)) ; length 2, structure=weight 10
+(define B2 (make-branch 5 4))
+(define M1 (make-mobile B1 B2)) ; M1 weight = 14
+(define B3 (make-branch 4 M1))  ; B3 torque = 4*14 = 56
+(define B4 (make-branch 7 8))   ; B4 torque = 56
+(define M2 (make-mobile B4 B3)) ; M2 is balanced
+
+; c.
+(define (number-branch? b) ; return #t iff branch b is just a number weight
+  (number? (branch-structure b)))
+
+(define (mobile-branch? b) (not (number-branch? b))) ; b is a branch which is itself another mobile
+
+(define (mobile-depth m)
+  (++ (max (branch-depth (left-branch m)) (branch-depth (right-branch m)))))
+
+(define (branch-depth b)
+  (cond
+    [(number-branch? b) 0]
+    [else ; b is a mobile, so its branch-structure is a mobile which we can call m
+     (let ([m (branch-structure b)])
+       (mobile-depth m))]))
+       
+#;(define (depth m) ;
+  (let ([left (left-branch m)] [right (right-branch m)])
+    (cond
+      [(and (number? (branch-structure left)) (number? (branch-structure right))) 1]
+      [(number? (branch-structure left)) (++ (depth (branch-structure right)))]
+      [else (+ (depth (branch-structure left)) (depth (branch-structure right)))])))
+
+(define (simple-mobile? m) (= 1 (mobile-depth m)))
+(define (simple-branch? b) (= 0 (branch-depth b))) ; This is redundant with number-branch? TODO, refactor
+
+(define (torque b)
+  (if (number-branch? b)
+      (* (branch-length b) (branch-structure b))
+      (* (branch-length b) (total-weight (branch-structure b)))))
+
+(define (mobile-is-balanced? m)
+  (let ([left (left-branch m)] [right (right-branch m)])
+    (cond
+      [(simple-mobile? m) (= (torque left) (torque right))]
+      [else ; not a simple mobile, so at least one branch has a submobile
+       (let ([1st-level-balanced? (= (torque left) (torque right))])
+         (and 1st-level-balanced? (branch-is-balanced? left) (branch-is-balanced? right)))])))
+
+(define (branch-is-balanced? b) ; number-branch is balanced, and o.w. b's submobile must be recursively balanced
+  (if (number-branch? b)
+      #t
+      (mobile-is-balanced? (branch-structure b)))) ; b is a branch so it's branch-structure is a mobile
+      
+(mobile-is-balanced? m1) ; => #t
+(mobile-is-balanced? m2) ; => #f
+(mobile-is-balanced? M1) ; => #t
+(mobile-is-balanced? M2) ; => #t
+
+; d. TODO
+; Skipping part d for now since I'm a bit "mobiled out" at this point.
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
