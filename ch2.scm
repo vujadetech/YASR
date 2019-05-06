@@ -449,11 +449,6 @@
    0
    coefficient-sequence))
 
-(define coeffs (list 1 3 0 5 0 1))
-(horner-eval 2 coeffs) ; 1 + 3x ... for x=2 ; => 79
-(define 2s (powers 2 5))
-(dot-product 2s coeffs) ; => 79
-
 (define (dot-product xs ys) ; for testing horner-eval
   (let ([zs (map (λ (z) (apply * z)) (zip xs ys))])
     (accumulate
@@ -461,9 +456,32 @@
      0
      zs)))
 
+(define coeffs (list 1 3 0 5 0 1))
+;;(horner-eval 2 coeffs) ; 1 + 3x ... for x=2 ; => 79
+(define 2s (powers 2 5))
+;;(dot-product 2s coeffs) ; => 79
+
 ; *******************************************
+; Ex 2.35
+(define (count-leaves-acc-enum t) ; using accumlate with enumerate-tree, different than book's suggestion
+  (accumulate
+   ; op
+   (λ (_ rest-count) (++ rest-count))
+   0 ; initial
+   (enumerate-tree t))) ; sequence
+
 ; *******************************************
+; Ex 2.36
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map (λ (xs) (car xs)) seqs)) ; accumulate on cars of all xs in seqs
+            (accumulate-n op init (map (λ (xs) (cdr xs)) seqs))))) ; then recur on cdrs of all xs in seqs
+
+(accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12))) ; => '(22 26 30)
+
 ; *******************************************
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
