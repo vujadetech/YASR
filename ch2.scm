@@ -449,7 +449,7 @@
    0
    coefficient-sequence))
 
-(define (dot-product xs ys) ; for testing horner-eval
+(define (dot xs ys) ; for testing horner-eval
   (let ([zs (map (λ (z) (apply * z)) (zip xs ys))])
     (accumulate
      (λ (z w) (+ z w))
@@ -459,14 +459,13 @@
 (define coeffs (list 1 3 0 5 0 1))
 ;;(horner-eval 2 coeffs) ; 1 + 3x ... for x=2 ; => 79
 (define 2s (powers 2 5))
-;;(dot-product 2s coeffs) ; => 79
+;;(dot 2s coeffs) ; => 79
 
 ; *******************************************
 ; Ex 2.35
 (define (count-leaves-acc-enum t) ; using accumlate with enumerate-tree, different than book's suggestion
   (accumulate
-   ; op
-   (λ (_ rest-count) (++ rest-count))
+   (λ (_ rest-count) (++ rest-count)) ; op
    0 ; initial
    (enumerate-tree t))) ; sequence
 
@@ -478,9 +477,26 @@
       (cons (accumulate op init (map (λ (xs) (car xs)) seqs)) ; accumulate on cars of all xs in seqs
             (accumulate-n op init (map (λ (xs) (cdr xs)) seqs))))) ; then recur on cdrs of all xs in seqs
 
-(accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12))) ; => '(22 26 30)
+;; (accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12))) ; => '(22 26 30)
 
 ; *******************************************
+; Ex 2.37
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+
+(define (matrix-*-vector m v)
+  (map (λ (row) (dot-product v row)) m))
+(define (transpose mat)
+  (accumulate-n cons '() mat))
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (λ (m_row) (matrix-*-vector cols m_row))  m)))
+
+(define mat1 '((1 2 3 4) (4 5 6 6) (6 7 8 9))) ; 3x4 matrix
+(define v1 '(1 -2 3 -4))
+(define mat2 '((1 2) (3 4) (6 7) (8 9))) ; 4x2 matrix
+(define mat2T (transpose mat2)) ; '((1 3 6 8) (2 4 7 9))
+;;(matrix-*-matrix mat1 mat2) ; => '((57 67) (103 124) (147 177)), though I'm too lazy to check if that's right, lol
 
 ; *******************************************
 ; *******************************************
