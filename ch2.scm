@@ -499,6 +499,25 @@
 ;;(matrix-*-matrix mat1 mat2) ; => '((57 67) (103 124) (147 177)), though I'm too lazy to check if that's right, lol
 
 ; *******************************************
+; Ex 2.38
+
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+
+(define fold-right accumulate)
+;;(fold-right / 1 (list 1 2 3)) ; => 1 / (acc (2 3)) => (/ 1 (/ 2 (/ 3 1))) => 3/2
+;;(fold-left  / 1 (list 1 2 3)) ; => (iter 1 (1 2 3)) => (iter (/ 1 1) (2 3)) =>
+; (iter 1 (2 3)) => (iter (/ 1 2) (3)) => (iter 1/2 (3)) => (iter (/ 1/2 3) '()) => 1/6
+;;(fold-right list nil (list 1 2 3)) 
+;;(fold-left list nil (list 1 2 3))
+; op should be commutative to ensure that fold-left and fold-right produce the same values.
+; Neither / nor list are communtative, hence the different results.
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
