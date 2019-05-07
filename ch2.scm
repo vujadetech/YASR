@@ -716,8 +716,36 @@
         (else (cons (car set1) (union-set (cdr set1) set2)))))
 
 ; *******************************************
+; Ex 2.60, TODO
 ; *******************************************
+; Ex 2.61, adjoin-ordered-set
+(define (element-of-ordered-set? x set)
+  (cond ((null? set) false)
+        ((= x (car set)) true)
+        ((< x (car set)) false)
+        (else (element-of-set? x (cdr set)))))
+
+(define (adjoin-ordered-set x set)
+  (cond
+    [(element-of-ordered-set? x set) set]
+    [(< x (car set)) (cons x set)]
+    [(> x (car set)) (cons (car set) (adjoin-ordered-set x (cdr set)))]))
+
+;; (adjoin-ordered-set 3 '(2 4)) ; => '(2 3 4)
+
 ; *******************************************
+; Ex 2.62, union-ordered-set
+
+(define (union-ordered-set set1 set2)
+  (if (or (null? set1) (null? set2))
+      (append set1 set2)
+      (let ((x1 (car set1)) (x2 (car set2)))
+        (cond
+          ((= x1 x2) (union-ordered-set (cdr set1) set2)) ; x1 already there
+          ((< x1 x2) (cons x1 (union-ordered-set (cdr set1) set2)))
+          ((< x2 x1) (cons x2 (union-ordered-set set1 (cdr set2))))))))
+
+;; (union-ordered-set '(1 3 9) '(2 8)) ; => '(1 2 3 8 9)
 ; *******************************************
 ; *******************************************
 ; *******************************************
