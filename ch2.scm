@@ -616,7 +616,11 @@
 
 ; Sums and products are constructed as lists:
 (define (make-sum a1 a2) (list '+ a1 a2))
-(define (make-product m1 m2) (list '* m1 m2))
+;;; (define (make-product m1 m2) (list '* m1 m2))
+(define (make-product m1 . ms)
+  (if (singleton-list? ms)
+      (list '* m1 (car ms))
+      (list '* m1 (apply make-product ms))))
 
 ; A sum is a list whose first element is the symbol +:
 (define (sum? x)
@@ -636,7 +640,12 @@
 (define (multiplier p) (cadr p))
 
 ; The multiplicand is the third item of the product list:
-(define (multiplicand p) (caddr p))
+;;; (define (multiplicand p) (caddr p))
+(define (multiplicand p)
+  (if (= (length p) 3) ; binary product, e.g., '(* x y), multiplicand = 'y, which is caddr
+      (caddr p)
+      ; else it has at least 3 values to be multiplied, so recur on the second and beyond:
+      (apply make-product (cddr p))))
 
 (define (deriv exp var)
   (cond ((number? exp) 0)
@@ -667,16 +676,45 @@
 ; *******************************************
 ; Ex 2.56, see deriv for exponentiation? section above
 (define (exponentiation? x)
-  (and (pair? x) (eq? (car x) '**)))
+  (and (pair? x) (or (eq? (car x) '**) (eq? (car x) '^)))) ; double star or caret style exponents
 
 (define (base exponentiation) (cadr exponentiation))
 (define (exponent exponentiation) (caddr exponentiation))
 
-(define (make-exponentiation b e) (list '** b e))
+(define (make-exponentiation b e) (list '** b e)) ; b^e or b**e
+
+;; (deriv '(** x 3) 'x) ; => '(* (* 3 (** x 2)) 1)
+; *******************************************
+; Ex 2.57, changed in Sec 2.3.2 code
+; Only product done so far.
+; *******************************************
+; Sec 2.3.3 Sets
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+
+(define (adjoin-set x set)
+  (if (element-of-set? x set)
+      set
+      (cons x set)))
+
+(define (intersection-set set1 set2)
+  (cond ((or (null? set1) (null? set2)) '())
+        ((element-of-set? (car set1) set2)        
+         (cons (car set1)
+               (intersection-set (cdr set1) set2)))
+        (else (intersection-set (cdr set1) set2))))
 
 ; *******************************************
-; *******************************************
-; *******************************************
+; Ex 2.59
+(define (union-set set1 set2)
+  (cond ((or (null? set1) (null? set2)) (append set1 set2))
+        ((element-of-set? (car set1) set2)        
+        ; (cons (car set1) (intersection-set (cdr set1) set2)))
+         (union-set (cdr set1) set2)) ; (car set1) already in set2, keep going on (cdr set1)
+        (else (cons (car set1) (union-set (cdr set1) set2)))))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
