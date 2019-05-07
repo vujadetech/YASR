@@ -2,8 +2,10 @@
 
 (define (make-leaf symbol weight)
   (list 'leaf symbol weight))
+
 (define (leaf? object)
   (eq? (car object) 'leaf))
+
 (define (symbol-leaf x) (cadr x))
 (define (weight-leaf x) (caddr x))
 
@@ -74,8 +76,43 @@
 (define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
 
 ;; (decode sample-message sample-tree) ; => '(A D A B B C A)
-
 ; *******************************************
+; Ex 2.68
+
+(define (encode message tree)
+  (if (null? message)
+      '()
+      (append (encode-symbol (car message) tree)
+              (encode (cdr message) tree))))
+
+(define (encode-symbol-h symbol tree) ; symbol is assumed to be in tree for the helper function
+  (unless (leaf? tree) ; if it's a leaf do nothing since done
+    (cond
+      [(has-leaf-sym? (left-branch tree) symbol)
+       (if (leaf? (left-branch tree))
+           '(0)
+           (cons 0 (encode-symbol-h symbol (left-branch tree))))]
+      [else
+       (if (leaf? (right-branch tree))
+           '(1)
+           (cons 1 (encode-symbol-h symbol (right-branch tree))))])))
+                                               
+(define (encode-symbol symbol tree)
+  (if (not (has-leaf-sym? tree symbol))
+      (error "Error: Symbol not in tree.")
+      (encode-symbol-h symbol tree)))
+    
+(define (leaf-sym? node sym) ; #t iff node is of form '(leaf sym N) for some number N.
+  (and (leaf? node) (eq? (symbol-leaf node) sym)))
+
+(define (has-leaf-sym? tree sym) ; #t if tree contains the leaf which has sym
+  (cond
+    [(null? tree) #f]
+    [(leaf? tree) (leaf-sym? tree sym)]
+    [(or (has-leaf-sym? (left-branch tree) sym) (has-leaf-sym? (right-branch tree) sym))]
+    [else #f]))
+
+;; (encode '(A D A B B C A) sample-tree) ; => '(0 1 1 0 0 1 0 1 0 1 1 1 0)
 ; *******************************************
 ; *******************************************
 ; *******************************************
