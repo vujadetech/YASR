@@ -1,5 +1,6 @@
 #lang racket
 (require srfi/1)
+; (require sicp-pict)
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
@@ -45,6 +46,19 @@
   (if (empty? (cdr xs))
       '()
       (cons (car xs) (init (cdr xs)))))
+
+(define (next-odd n) (+ n 1 (mod n 2))) ; add an extra 1 if n is odd (i.e., n (mod 2) = 1)
+
+(define (find-divisor+ n test-divisor) ; refactor of find-divisor; '+' b/c it will be an improvement, or at least one hopes.
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor+ n (next-odd test-divisor)))))
+
+(define (smallest-divisor+ n) ; refactor of smallest-divisor
+  (find-divisor+ n 2))
+
+(define (prime?+ n) (= (smallest-divisor+ n) n)) ; improved prime? proc
+(define prime? prime?+)
 
 ; *******************************************
 ; *******************************************
@@ -515,8 +529,14 @@
 ; (iter 1 (2 3)) => (iter (/ 1 2) (3)) => (iter 1/2 (3)) => (iter (/ 1/2 3) '()) => 1/6
 ;;(fold-right list nil (list 1 2 3)) 
 ;;(fold-left list nil (list 1 2 3))
+; general cases in infix notation using id (identity) for initial value
+; since that's the most common case: 0 for adding nums, '() for  for concatenating lists, etc.
+;  (fold-left op id '(x1 ... x_N)) => ((((id op x1) op x2) ... ) op x_N
+;  that is, put id in front of the xs and left associate op.
+;  (fold-right op id '(x1 ... x_N) =>   (x1 op (x2 op ... op (x_N-1  op (x_N op id))))
+;  put id at end of xs and right associate op.
 ; op should be commutative to ensure that fold-left and fold-right produce the same values.
-; Neither / nor list are commutative, hence the different results.
+; Neither / nor list are commutative, hence the different results for left vs right folds.
 
 ; *******************************************
 ; Ex 2.39
@@ -526,11 +546,62 @@
   (fold-left (lambda (x y) (cons y x)) nil sequence))
 
 ; *******************************************
+; Nested mappings
+
+(define (nest-pair n)
+  (accumulate append
+            nil
+            (map (lambda (i)
+                   (map (lambda (j) (list i j))
+                        (enumerate-interval 1 (- i 1))))
+                 (enumerate-interval 1 n))))
+
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (flatmap
+                (lambda (i)
+                  (map (lambda (j) (list i j))
+                       (enumerate-interval 1 (- i 1))))
+                (enumerate-interval 1 n)))))
+
 ; *******************************************
+; TODO 2.40-43
 ; *******************************************
+; Sec 2.2.4 A picture language
+; TODO
 ; *******************************************
+; 2.3 Symbolic Data
 ; *******************************************
+; Ex 2.53, N/A
 ; *******************************************
+; Ex 2.54
+; The book didn't mention whether lists might have numbers, so ignoring that possibility.
+
+(define (one-list-null-other-not? xs ys) ; assumes xs and ys are both lists.
+  (or (and (null? xs) (not (null? ys))) (and (null? ys) (not (null? xs)))))
+
+(define (vujadeTech-equal? a b) ; equal? already in namespace
+  (cond
+    [(and (symbol? a) (symbol? b)) (eq? a b)]
+    [(and (list? a) (list? b) (null? a) (null? b)) #t] ; all empty lists ar equal
+    [(and (list? a) (list? b) (one-list-null-other-not? a b)) #f]
+    [(and (list? a) (list? b)) ; if this point is reached a and b are both non-empty lists.
+     (and (vujadeTech-equal? (car a) (car b))
+          (vujadeTech-equal? (cdr a) (cdr b)))]
+    [else #f])) ; if this stage is reached then one is a symbol and other is list, hence unequal.
+     
+;; (vujadeTech-equal? '(this is a list) '(this is a list))   ; => #t
+;; (vujadeTech-equal? '(this is a list) '(this (is a) list)) ; => #f
 ; *******************************************
 ; *******************************************
 ; *******************************************
