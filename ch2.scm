@@ -262,12 +262,12 @@
 ; First some tree-oriented helpers:
 (define empty-tree? null?)
 (define empty-tree '())
-(define (leaf? t) (not (pair? t)))
+(define (leaf-node? t) (not (pair? t)))
 
 (define (fringe t)
   (cond
     [(empty-tree? t) empty-tree]
-    [(leaf? (car t)) (cons (car t) (fringe (cdr t)))]
+    [(leaf-node? (car t)) (cons (car t) (fringe (cdr t)))]
     [else (append (fringe (car t)) (fringe (cdr t)))]))
 
 ; *******************************************
@@ -379,7 +379,7 @@
 ; Ex 2.30
 (define (square-tree tree)
   (cond ((null? tree) nil)
-        ((leaf? tree) (sq tree))
+        ((leaf-node? tree) (sq tree))
         (else (cons (square-tree (car tree))
                     (square-tree (cdr tree))))))
 
@@ -387,7 +387,7 @@
             
 (define (square-tree-map tree)
   (map (lambda (sub-tree)
-         (if (not (leaf? sub-tree))
+         (if (not (leaf-node? sub-tree))
              (square-tree-map sub-tree)
              (sq sub-tree)))
        tree))
@@ -398,7 +398,7 @@
 ; Ex 2.31
 (define (tree-map proc tree)
   (map (lambda (sub-tree)
-         (if (not (leaf? sub-tree))
+         (if (not (leaf-node? sub-tree))
              (tree-map proc sub-tree)
              (proc sub-tree)))
        tree))
@@ -747,7 +747,12 @@
 
 ;; (union-ordered-set '(1 3 9) '(2 8)) ; => '(1 2 3 8 9)
 ; *******************************************
+; Sets as binary trees TODO
+
 ; *******************************************
+; Sec 2.3.4 Huffman Encoding Trees
+; See file ch2-huffman.scm due to namespace conflicts.
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
