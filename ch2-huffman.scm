@@ -54,7 +54,8 @@
         (else (cons (car set)
                     (adjoin-set x (cdr set))))))
 
-; The following procedure takes a list of symbol-frequency pairs such as ((A 4) (B 2) (C 1) (D 1)) and constructs an initial ordered set of leaves, ready to be merged according to the Huffman algorithm:
+; The following procedure takes a list of symbol-frequency pairs such as ((A 4) (B 2) (C 1) (D 1))
+; and constructs an initial ordered set of leaves, ready to be merged according to the Huffman algorithm:
 
 (define (make-leaf-set pairs)
   (if (null? pairs)
@@ -72,6 +73,7 @@
                    (make-leaf 'B 2)
                    (make-code-tree (make-leaf 'D 1)
                                    (make-leaf 'C 1)))))
+(define st sample-tree)
 
 (define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
 
@@ -85,7 +87,7 @@
       (append (encode-symbol (car message) tree)
               (encode (cdr message) tree))))
 
-(define (encode-symbol-h symbol tree) ; symbol is assumed to be in tree for the helper function
+#;(define (encode-symbol-h symbol tree) ; symbol is assumed to be in tree for the helper function
   (unless (leaf? tree) ; if it's a leaf do nothing since done
     (cond
       [(has-leaf-sym? (left-branch tree) symbol)
@@ -96,7 +98,16 @@
        (if (leaf? (right-branch tree))
            '(1)
            (cons 1 (encode-symbol-h symbol (right-branch tree))))])))
-                                               
+
+; Refactored version:
+(define (encode-symbol-h symbol tree)
+  (unless (leaf? tree)
+    (let* ([bit (if (has-leaf-sym? (left-branch tree) symbol) 0 1)]
+           [branch (if (= bit 0) (left-branch tree) (right-branch tree))])
+      (if (leaf? branch)
+          (list bit)
+          (cons bit (encode-symbol-h symbol branch))))))
+       
 (define (encode-symbol symbol tree)
   (if (not (has-leaf-sym? tree symbol))
       (error "Error: Symbol not in tree.")
@@ -113,6 +124,44 @@
     [else #f]))
 
 ;; (encode '(A D A B B C A) sample-tree) ; => '(0 1 1 0 0 1 0 1 0 1 1 1 0)
+; *******************************************
+; Ex 2.69
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+
+(define (successive-merge-acc part-tree leaf-set) ; successive merge starting with partially constructed tree, part-tree
+  (cond
+    [(empty? leaf-set) part-tree]
+    [else (successive-merge-acc (make-code-tree (car leaf-set) part-tree) (cdr leaf-set))]))
+  
+(define (successive-merge leaf-set) ; assume leaf-set has at least 2 leafs since merging is meaningless o.w.
+  (let* ([first-2-leaves (take leaf-set 2)]
+         [first-2-codetree (make-code-tree (car first-2-leaves) (cadr first-2-leaves))])
+         (if (empty? (cddr leaf-set))
+             first-2-codetree
+             (successive-merge-acc first-2-codetree (cddr leaf-set)))))
+
+; Some vars to experiment in REPL:
+(define ps1 '((A 4) (B 2) (C 1) (D 1)))
+(define ps1-cd (cddr ps1))
+(define ls-cd (make-leaf-set ps1-cd)) ; leaf set of ((C 1) (D 1))
+(define ps2 '((B 2) (C 1) (D 1)))
+(define st2 '((leaf B 2) ((leaf D 1) (leaf C 1) (D C) 2) (B D C) 4)) ; sample-tree2, which is subtree of st
+(define ld1 '(leaf D 1)) ; Larry David is #1! I mean '(leaf D 1), excuse me.
+(define lc1 '(leaf C 1))
+(define lb2 '(leaf B 2))
+(define tdc (make-code-tree ld1 lc1))
+(define tbdc (make-code-tree lb2 tdc))
+
+;; (generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))) ; => '((leaf A 4) ((leaf B 2) ((leaf D 1) (leaf C 1) (D C) 2) (B D C) 4) (A B D C) 8)
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
 ; *******************************************
 ; *******************************************
 ; *******************************************
