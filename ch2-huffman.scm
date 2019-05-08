@@ -155,6 +155,20 @@
 
 ;; (generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))) ; => '((leaf A 4) ((leaf B 2) ((leaf D 1) (leaf C 1) (D C) 2) (B D C) 4) (A B D C) 8)
 ; *******************************************
+; Ex 2.70
+
+(define (pair< p1 p2) (< (cadr p1) (cadr p2)))
+(define lyrics (sort '((A 2) (NA	16) (BOOM 1) (SHA 3) (GET 2) (YIP 9) (JOB 2) (WAH 1)) pair<))
+(define lyrics-huff-tree (generate-huffman-tree lyrics))
+(define SONG-message
+  '(GET A JOB SHA NA NA NA NA NA NA NA NA GET A JOB SHA NA NA NA NA NA NA NA NA WAH YIP YIP YIP YIP YIP YIP YIP YIP YIP SHA BOOM))
+; SONG-message has 36 symbols = 3*36=108 bits if using naive encoding
+(define SONG-encoded (encode SONG-message lyrics-huff-tree))
+;; (length SONG-encoded) ; => 87
+; so encoding uses 87/108 = 81% as many bits as naive encoding for a 19% reduction - not too shabby!
+
+;;(decode SONG-encoded lyrics-huff-tree) ; => '(GET A JOB SHA NA NA NA NA NA NA NA NA GET A JOB SHA NA NA NA NA NA NA NA NA WAH YIP YIP YIP YIP YIP YIP YIP YIP YIP SHA BOOM)
+; decode returned original (and deeply meaningful) lyrics
 ; *******************************************
 ; *******************************************
 ; *******************************************
