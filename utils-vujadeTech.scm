@@ -1,9 +1,9 @@
-
 (module utils-vujadeTech racket
   (provide vujadeTech repeat powers
            mod negative -- ++ non-empty-list? singleton-list?
            range-fixed sq square nil 1/
-           halve fst snd zero? iter time-ms first-two-same? mean decades divides? init
+           halve fst snd           ; zero?
+           iter time-ms first-two-same? mean decades divides? init
            next-odd find-divisor smallest-divisor prime?
            ^ remove-once lg_ lg- alphabet
            )
@@ -11,8 +11,9 @@
   (define (vujadeTech)
     (display "Tomorrow's future ... yesterday!"))
 
-  (define (repeat x n)
-    (map (λ (_) x) (range 1 (++ n))))
+  (define (repeat x n) ; kludgy, but it'll git-r-done until and if I decide to incorporate collections-lib which has it built in.
+    ; TODO: 
+    (map (λ (_) x) (range 1 (++ n)))) 
 
   (define (powers x k) ; => '(x^0 x^1 x^2 ... x^k)
     (map (λ (k) (^ x k)) (range 0 (++ k))))
@@ -33,10 +34,10 @@
   (define 1/ (λ (x) (/ 1 x)))
 
   (define (halve x) (/ x 2))
-;  (define (double x) (* x 2))
+;  (define (double x) (* x 2)) 
   (define (fst xs) (car xs))
   (define (snd xs) (cadr xs))
-  (define (zero? x) (= x 0))
+;  (define (zero? x) (= x 0)) ; This is already a racket built in.
   (define (iter f k n)
     (cond [(zero? k) n]
           [(= 1 k) (f n)]
@@ -76,6 +77,5 @@
   (define lg_ (λ (n) (inexact->exact (floor (log n 2)))))   ; floor of log base 2
   (define lg- (λ (n) (inexact->exact (ceiling (log n 2))))) ; ceiling of log base 2
   (define alphabet '(a b c d e f g h i j k l m n o p q r s t u v w x y z))
-
   
-  )
+)

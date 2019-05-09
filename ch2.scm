@@ -1,7 +1,8 @@
 #lang racket
 (require srfi/1)
+;(require scheme/base)
 (require "utils-vujadeTech.scm")
-; (require sicp-pict)
+
 
 ; To run test code, uncomment the double semi-colons at the end of each section, though not all sections have test cases
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
@@ -700,7 +701,96 @@
 ; *******************************************
 ; Sec 2.3.4 Huffman Encoding Trees
 ; See file ch2-huffman.scm due to namespace conflicts.
+; *******************************************
+; Sec 2.4 Multiple Representations for Abstract data
 
+; *******************************************
+; From Eli Bendersky's website:
+;; Operation, type -> procedure
+;; Dispatch table.
+;; 
+(define *op-table* (make-hash-table 'equal))
+
+(define (put op type proc)
+  (hash-table-put! *op-table* (list op type) proc))
+
+(define (get op type)
+  (hash-table-get *op-table* (list op type) '()))
+; *******************************************
+
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+(define (type-tag datum)
+  (if (pair? datum)
+      (car datum)
+      (error "Bad tagged datum -- TYPE-TAG" datum)))
+(define (contents datum)
+  (if (pair? datum)
+      (cdr datum)
+      (error "Bad tagged datum -- CONTENTS" datum)))
+
+; Using these procedures, we can define predicates rectangular? and polar?, which recognize
+; polar and rectangular numbers, respectively:
+
+(define (rectangular? z)
+  (eq? (type-tag z) 'rectangular))
+(define (polar? z)
+  (eq? (type-tag z) 'polar))
+
+(define (install-rectangular-package)
+  ;; internal procedures
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (sqrt (+ (square (real-part z))
+             (square (imag-part z)))))
+  (define (angle z)
+    (atan (imag-part z) (real-part z)))
+  (define (make-from-mag-ang r a) 
+    (cons (* r (cos a)) (* r (sin a))))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular 
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'rectangular 
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+
+; *******************************************
+; Ex 2.73 TODO after get and put are defined next chapter
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
 ; *******************************************
 ; *******************************************
 ; *******************************************

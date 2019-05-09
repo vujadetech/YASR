@@ -21,7 +21,6 @@
 ; If we make a tree in this way, we have the following selectors:
 
 (define (left-branch tree) (car tree))
-
 (define (right-branch tree) (cadr tree))
 (define (symbols tree)
   (if (leaf? tree)
@@ -83,7 +82,6 @@
 ;; (decode sample-message sample-tree) ; => '(A D A B B C A)
 ; *******************************************
 ; Ex 2.68
-
 (define (encode message tree)
   (if (null? message)
       '()
