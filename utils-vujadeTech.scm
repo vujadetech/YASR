@@ -84,6 +84,8 @@
   (define (+=! i bump) ; Ripoff of C++ i += bump. Since we appear to be going C++/Java, we may as well
     ; use their established and succinct idioms. Add ! to indicate it's destructive.
     (set! i (+ i bump))
-    i) ; This didn't work; it appears to be passing by value. 
+    i) ; This didn't work; it appears to be passing by value, which would make sense given
+  ; that Scheme is a nearly pure functional language. Of course it's annoying here when
+  ; some old school state manipulation using pass by ref would come in handy, but oh Scheme, I can't stay mad at you!!
   
 )
