@@ -13,7 +13,7 @@
   (define (vujadeTech)
     (display "Tomorrow's future ... yesterday!"))
 
-  (define (repeat x n) ; kludgy, but it'll git-r-done until and if I decide to incorporate collections-lib which has it built in.
+  (define (repeat x n) ; kludgy, but it'll git-r-done until and if I decide to incorporate data/collections which has it built in.
     ; TODO: 
     (map (λ (_) x) (range 1 (++ n)))) 
 
@@ -86,6 +86,6 @@
     (set! i (+ i bump))
     i) ; This didn't work; it appears to be passing by value, which would make sense given
   ; that Scheme is a nearly pure functional language. Of course it's annoying here when
-  ; some old school state manipulation using pass by ref would come in handy, but oh Scheme, I can't stay mad at you!!
+  ; some old school state manipulation using pass by ref would come in handy, but oh Scheme, I can't stay mad at you!!!
   
 )

@@ -53,7 +53,6 @@
 
 ; *******************************************
 ; Ex 3.2
-
 (define (make-monitored f)
   (let ([count (make-accumulator 0)]) 
     (λ (x)
@@ -113,13 +112,39 @@
   ((mawpc p) b))
 
 (define acc-pass (make-account-with-password 100 'secret-password))
-
-#;(define acc-pass-c
-  ((make-account-with-password-curried 'secret-password) 100)) ; curried version
-((acc-pass 'secret-password 'withdraw) 40)
-((acc-pass 'some-other-password 'deposit) 50) 
-
+;;((acc-pass 'secret-password 'withdraw) 40)    ; => 60
+;;((acc-pass 'some-other-password 'deposit) 50) ; => "Incorrect password."
 ; *******************************************
+; Ex 3.4
+(define (reset-accumulator a)
+  (a (- (a 0))))
+
+(define (make-account-with-password-limit balance password)
+  (let ([acc (make-account balance)][failed-pass (make-accumulator 0)][fail-pass-limit 7])
+    (λ (pass-given m) ; Must provide both a pass and m so acc will know whether to dispatch on
+      ; withdraw or deposit.
+      (if (eq? pass-given password)
+          (begin ; correct pass
+            (reset-accumulator failed-pass)
+            (acc m))
+          (begin ; wrong pass
+            (failed-pass 1)
+           ; (display (failed-pass 0))
+            (if (<= (failed-pass 0) fail-pass-limit)
+                (λ (_) "Incorrect password.")
+                (λ (_) "Quick! What's the number for 911!?!?!"))))
+          )))
+
+(define acc-pass-limit (make-account-with-password-limit 100 'secret-password))
+;;(map (λ (pass) ((acc-pass-limit pass 'deposit) 50)) (repeat 'some-other-password 8))
+; => '("Incorrect password."
+;  "Incorrect password."
+;  "Incorrect password."
+;  "Incorrect password."
+;  "Incorrect password."
+;  "Incorrect password."
+;  "Incorrect password."
+;  "Quick! What's the number for 911!?!?!")
 ; *******************************************
 ; *******************************************
 ; *******************************************
