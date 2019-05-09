@@ -6,7 +6,6 @@
 ; and some have test cases I've left un-commented. It's a bit unorganized, but github is free so you get what you pay for.
 ; NB: These haven't been tested exhaustively so there could be errors.
 
-(define xs '(42 99 7))    ; for testing
 (define (sq x) (* x x))
 (define square sq)
 (define nil null)
@@ -119,7 +118,7 @@
     (λ (x) ((n1 f) ((n2 f) x)))))
 
 ; A few extras for experimenting:
-(define three (add one two)) ; (three f) is function f iterated 3 times
+(define three (add one two))  ; (three f) is function f iterated 3 times
 (define four (add one three))
 (define five (add one four))
 
