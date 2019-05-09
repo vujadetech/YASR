@@ -2,7 +2,7 @@
 (require srfi/1) ; for zip
 (require "utils-vujadeTech.scm")
 
-
+; From SICP, Huffman code section:
 (define (make-leaf symbol weight)
   (list 'leaf symbol weight))
 
@@ -225,9 +225,8 @@
 ; 2.71
 ; Let's call such a recado a base2 recado.
 (define (make-base2-recado n) ; generate a simple base2 with n symbols: freqs = (1 2 ... 2^(n-1))
-  (let* ([max-symbols alphabet] ; ''(a b c d e f g h i j k l m n o p q r s t u v w x y z)
-         [freqs (powers 2 (-- n))]
-         [symbols (take max-symbols n)]
+  (let* ([freqs (powers 2 (-- n))]
+         [symbols (take alphabet n)]
          [freq-pairs (zip symbols freqs)])
     (apply append (map (λ (fp) (repeat (car fp) (cadr fp))) freq-pairs))))
 
