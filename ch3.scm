@@ -49,9 +49,34 @@
     (set! current (+ current delta))
     current))
 
-;; (define A (make-accumulator 5))
+(define A (make-accumulator 5))
 
 ; *******************************************
+; Ex 3.2
+#;(define (make-monitored f) ; f takes one input
+  (let ([count 0])
+    (λ (x)
+      (define (dispatch m)
+        (cond
+          [(eq? m 'how-many-calls?) count]
+          [else (begin
+                  (++ count)
+                  (f x))]))
+      dispatch)))
+
+(define (make-monitored f)
+  (let ([count (make-accumulator 0)]) 
+    (λ (x)
+      (if (number? x)
+          (begin
+            (count 1) ; add 1 to count
+            (f x))    ; and return f(x)
+          (count 0))  ; return current count
+      )))
+  
+
+(define s (make-monitored sqrt))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
