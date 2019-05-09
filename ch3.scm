@@ -20,7 +20,7 @@
 ; a ``bank-account object'' with a specified initial balance:
 
 (define (make-account balance)
-  (define (withdraw amount)
+  (define (withdraw amount) ; This appears to behave like an OO member function. Ditto for deposit.
     (if (>= balance amount)
         (begin (set! balance (- balance amount))
                balance)
@@ -28,21 +28,29 @@
   (define (deposit amount)
     (set! balance (+ balance amount))
     balance)
-  (define (dispatch m)
+  (define (dispatch m) ; This appears to function like an OO virtual lookup table. And m means "member"?
     (cond ((eq? m 'withdraw) withdraw)
           ((eq? m 'deposit) deposit)
           (else (error "Unknown request -- MAKE-ACCOUNT"
                        m))))
   dispatch)
 
-(define acc (make-account 100))
-;((acc 'withdraw) 50)
+(define acc (make-account 100)) ; Same as C++ constructor with member variable balance = 100? 
+;((acc 'withdraw) 50) ; Same as C++ acc->withdraw(50)?
 ;((acc 'withdraw) 60)
 ;((acc 'deposit) 40)
 ;((acc 'withdraw) 60)
 
 ; *******************************************
 ; Ex 3.1
+(define (make-accumulator current) ; Start with current, add delta when calling the function each time.
+  (λ (delta)
+    ; (+=! current delta)
+    (set! current (+ current delta))
+    current))
+
+;; (define A (make-accumulator 5))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************

@@ -6,6 +6,8 @@
            iter time-ms first-two-same? mean decades divides? init
            next-odd find-divisor smallest-divisor prime?
            ^ remove-once lg_ lg- alphabet
+           ; Ch 3
+           +=!
            )
 
   (define (vujadeTech)
@@ -77,5 +79,11 @@
   (define lg_ (λ (n) (inexact->exact (floor (log n 2)))))   ; floor of log base 2
   (define lg- (λ (n) (inexact->exact (ceiling (log n 2))))) ; ceiling of log base 2
   (define alphabet '(a b c d e f g h i j k l m n o p q r s t u v w x y z))
+
+  ; Chapter 3:
+  (define (+=! i bump) ; Ripoff of C++ i += bump. Since we appear to be going C++/Java, we may as well
+    ; use their established and succinct idioms. Add ! to indicate it's destructive.
+    (set! i (+ i bump))
+    i) ; This didn't work; it appears to be passing by value. 
   
 )
