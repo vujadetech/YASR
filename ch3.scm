@@ -1,4 +1,9 @@
 #lang racket
+
+; For set-car! etc:
+;(require r5rs) ; This threw an error - conflicts with srfi/1?
+(require rnrs/mutable-pairs-6)
+
 (require srfi/1)
 (require "utils-vujadeTech.scm")
 
@@ -289,12 +294,12 @@
   (mod (apply + (flatten (idt x))) 2))
 
 ; +_lr is like plus but forces evaluation of e1 first
-(define (+_lr e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
+(define (+_lr e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered.
   (let ([x1 (eval e1)]) ; eval e1 first
     (let ([x2 (eval e2)])
       (+ x1 x2))))
 
-(define (+_rl e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
+(define (+_rl e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered.
   (let ([x2 (eval e2)]) ; eval e2 first
     (let ([x1 (eval e1)])
       (+ x1 x2))))
@@ -310,21 +315,18 @@
 
 (define id (λ (x) x))
 
-(define (make-historied f [starting-history '()]) ; if x sent to f, returns f(x), otherwise all values sent to x
+(define (make-historied f [starting-history '()]) ; if a number x is sent to f, returns f(x), otherwise all values previously sent to f
   (let ([history (make-list-acc starting-history)])
     (λ (x)
       (if (number? x) ; if x is a num, add x to history and return f(x)
           (begin
             (history (list x))
             (f x))
-          (history '()))))) ; else just return history
+          (history '()))))) ; else just return history for any input that's not a number, like say the symbol 'get-history 
 
 (define (f2 x)
   (let* ([idh (make-historied id)][curr (idh '())])
-   ; (let ([hist (idh '())])
-    
-      (let ([answer
-             (if (empty? (idh '())) 0 (car (idh '())))])
+      (let ([answer  (if (empty? (idh '())) 0 (car (idh '())))])
         (begin
           (idh x)
           (list answer (idh '()))))))
@@ -335,7 +337,6 @@
     ;  trail)))
     (f3-trail x)))
 
- 
 #;(define (f-trail f)
   (let ([f-hist (make-historied f)])
     (λ (x)
@@ -358,10 +359,8 @@
 ;;(+_rl '(f 0) '(f 1)) ; => 1
 
 ;; (+ (f 0) (f 1)) ; => 0, so + is behaving like it evaluates it's arguments left to right.
+; NB: This was failing sometimes b/c it needed the environment reevaluated. See below for more experiments.
 
-
-; *******************************************
-; MISC
 (define (f4 x)
   (let* ([curr (idt x)][hist (cdr curr)][prev-hist (if (empty? hist) '() (cdr hist))])
    ; (list hist prev-hist)))
@@ -408,15 +407,72 @@
 (define (f10 x) (/ (f9 x) 2))
 
 ; Finally got one that works regardless of function history:
-(+ (f10 0) (f10 1))
-(+ (f10 1) (f10 0)) ; This is like a + that evaluates right to left on the above version
+;; (+ (f10 0) (f10 1)) ; => 0
+;; (+ (f10 1) (f10 0)) ; => 1 This is like a + that evaluates right to left on the above inputs above.
 
+; *******************************************
+; 3.2 The environment model of evaluation
+
+; TL;DR: An ENV is seq of FRAMES what are tables of (possibly empty) BINDINGS (var of num, proc, etc => value)
+; and a pointer to its enclosing ENV (unless it's the global ENV). BINDINGS are searched bottum up.
+
+; [From book]
+; When we introduced compound procedures in chapter 1, we used the substitution model of evaluation
+; (section 1.1.5) to define what is meant by applying a procedure to arguments:
+
+; To apply a compound procedure to arguments, evaluate the body of the procedure with each
+; formal parameter replaced by the corresponding argument.
+; Once we admit assignment into our programming language, such a definition is no longer adequate.
+; In particular, section 3.1.3 argued that, in the presence of assignment, a variable can no longer
+; be considered to be merely a name for a value. Rather, a variable must somehow designate a ``place''
+; in which values can be stored. In our new model of evaluation, these places will be maintained in
+; structures called environments.
+
+; An environment is a sequence of frames. Each frame is a table (possibly empty) of bindings,
+; which associate variable names with their corresponding values. (A single frame may contain at most
+; one binding for any variable.) Each frame also has a pointer to its enclosing environment,
+; unless, for the purposes of discussion, the frame is considered to be global.
+; The value of a variable with respect to an environment is the value given by the binding of the
+; variable in the first frame in the environment that contains a binding for that variable.
+; If no frame in the sequence specifies a binding for the variable, then the variable is said
+; to be unbound in the environment. 
 
 ; *******************************************
+; Ex 3.9, NA show environment structures created
 ; *******************************************
+; Ex 3.10 NA show ENVs
+
+; Recall from section 1.3.2 that let is simply syntactic sugar for a procedure call:
+
+; (let ((<var> <exp>)) <body>) is interpreted as an alternate syntax for
+
+; ((λ (<var>) <body>) <exp>)
+
 ; *******************************************
+; Ex 3.11 NA show ENVs
 ; *******************************************
-; *******************************************
+; Ex 3.12
+(define (last-pair-sicp x)
+  (if (null? (cdr x))
+      x
+      (last-pair-sicp (cdr x))))
+
+(define (append! x y)
+  (set-cdr! (last-pair-sicp x) y)
+  x)
+
+(define xs '(1 2))
+(define ys '(3))
+
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+z
+; (a b c d)
+(cdr x)
+; <response>
+(define w (append! x y))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
