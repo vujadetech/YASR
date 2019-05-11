@@ -451,27 +451,7 @@
 ; *******************************************
 ; Ex 3.11 NA show ENVs
 ; *******************************************
-; Ex 3.12
-(define (last-pair-sicp x)
-  (if (null? (cdr x))
-      x
-      (last-pair-sicp (cdr x))))
-
-(define (append! x y)
-  (set-cdr! (last-pair-sicp x) y)
-  x)
-
-(define xs '(1 2))
-(define ys '(3))
-
-(define x (list 'a 'b))
-(define y (list 'c 'd))
-(define z (append x y))
-z
-; (a b c d)
-(cdr x)
-; <response>
-(define w (append! x y))
+; Ex 3.12 See ch3-lang-sicp.scm.
 
 ; *******************************************
 ; *******************************************
