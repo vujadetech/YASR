@@ -287,7 +287,6 @@
 ; Ex 3.8
 (define (f x)
   (mod (apply + (flatten (idt x))) 2))
-   
 
 ; +_lr is like plus but forces evaluation of e1 first
 (define (+_lr e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
@@ -311,14 +310,14 @@
 
 (define id (λ (x) x))
 
-(define (make-historied f) ; if x sent to f, returns f(x), otherwise all values sent to x
-  (let ([history (make-list-acc '())])
+(define (make-historied f [starting-history '()]) ; if x sent to f, returns f(x), otherwise all values sent to x
+  (let ([history (make-list-acc starting-history)])
     (λ (x)
-      (if (number? x)
+      (if (number? x) ; if x is a num, add x to history and return f(x)
           (begin
             (history (list x))
             (f x))
-          (history '())))))
+          (history '()))))) ; else just return history
 
 (define (f2 x)
   (let* ([idh (make-historied id)][curr (idh '())])
@@ -337,11 +336,17 @@
     (f3-trail x)))
 
  
-(define (f-trail f)
+#;(define (f-trail f)
   (let ([f-hist (make-historied f)])
     (λ (x)
       (let ([curr (f-hist x)])
         (list curr (f-hist '()))))))
+
+(define (f-trail f)
+  (let ([f-hist (make-historied f)])
+    (λ (x)
+      (f-hist x))))
+
 (define idt (f-trail id))
 
 (define (sq* x)
@@ -354,7 +359,59 @@
 
 ;; (+ (f 0) (f 1)) ; => 0, so + is behaving like it evaluates it's arguments left to right.
 
+
 ; *******************************************
+; MISC
+(define (f4 x)
+  (let* ([curr (idt x)][hist (cdr curr)][prev-hist (if (empty? hist) '() (cdr hist))])
+   ; (list hist prev-hist)))
+    (let ([prev-x (cond
+                    [(empty? (cdr hist)) 0]
+                    [else (cadr hist)])])
+      (list prev-x hist))))
+    
+(define (f5 x)
+  (let* ([curr (idt x)][hist (cdr curr)])
+    (let ([prev-hist (if (empty? hist) '() (cdr hist))])
+      (list hist prev-hist))))
+
+(define (f6 x)
+  (let* ([prev (idt '())][curr (idt x)])
+    (list prev curr)))
+
+(define f7
+  (let ([xs-hist (make-historied id)])
+    (λ (x)
+      (let ([has-prev-x? (not (empty? (xs-hist 'hist)))])
+        (let ([prev-x (if has-prev-x? (car (xs-hist 'hist)) 0)]) ; set prev-x to 0 if no history yet
+          (xs-hist x) ; add x to history
+          (if (not has-prev-x?)
+              x ; if no history, it's identity
+              (if (zero? x)
+                  (++ (negative (f7 1)))
+                  (negative (f7 0)))))))))
+
+(define f8
+  (let ([idm (make-historied id '(-1))])
+    (λ (x)
+      (idm x)
+      (idm 'hist))))
+
+(define f9
+  (let ([idm (make-monitored id)])
+    (λ (x)
+      (idm x)
+      (if (zero? x)
+          (++ (idm 'num-calls))
+          (negative (idm 'num-calls))))))
+
+(define (f10 x) (/ (f9 x) 2))
+
+; Finally got one that works regardless of function history:
+(+ (f10 0) (f10 1))
+(+ (f10 1) (f10 0)) ; This is like a + that evaluates right to left on the above version
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
