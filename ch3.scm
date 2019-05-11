@@ -28,9 +28,11 @@
   (define (deposit amount)
     (set! balance (+ balance amount))
     balance)
+  ;(define (current-balance) balance)
   (define (dispatch m) ; This appears to function like an OO virtual lookup table. And m means "member"?
     (cond ((eq? m 'withdraw) withdraw)
           ((eq? m 'deposit) deposit)
+          ((eq? m 'current-balance) balance)
           (else (error "Unknown request -- MAKE-ACCOUNT"
                        m))))
   dispatch)
@@ -76,7 +78,7 @@
           (λ (_) "Incorrect password.") ; constant function "Incorrect password."
           ))))
 
-(define make-account-with-password-curried
+#;(define make-account-with-password-curried
   (λ (password)
     (λ (balance)
       (let ([acc (make-account balance)])
@@ -87,7 +89,7 @@
               ))))))
 
 ;(define mawph make-account-with-password-h)
-(define mawpc make-account-with-password-curried)
+#;(define mawpc make-account-with-password-curried)
 
 #;(define (make-account-with-password balance password)
   ((make-account-with-password-curried password) balance))
@@ -263,6 +265,25 @@
 ; Last and first "random" lists should be the same: '(1083814473 711399388 3416838739 1642706014)
 
 ; *******************************************
+; Ex 3.7
+
+(define bad-pass-response (λ (_) "Incorrect password.")) ; constant function "Incorrect password."
+
+(define (make-joint acc1 pass1 pass2) ; (acc 'pass1) account must already exist and
+  ; is pass protected. That is, it needs a pass as well as member function to work.
+  (λ (pass2-given m)
+    (if (eq? pass2-given pass2)
+        (acc1 pass1 m) ; acc1 needs pass1 to work
+        bad-pass-response)))
+
+(define peter-acc (make-account-with-password 100 'open-sesame))
+(define paul-acc  (make-joint peter-acc 'open-sesame 'rosebud))
+
+;;(paul-acc 'rosebud 'current-balance) ; => 100
+;;((paul-acc 'rosebud 'deposit) 25) ; => 125
+;;(peter-acc 'open-sesame 'current-balance) ; 125, so peter has 125 b/c paul put in 25
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
