@@ -285,6 +285,9 @@
 
 ; *******************************************
 ; Ex 3.8
+(define (f x)
+  (mod (apply + (flatten (idt x))) 2))
+   
 
 ; +_lr is like plus but forces evaluation of e1 first
 (define (+_lr e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
@@ -333,31 +336,23 @@
     ;  trail)))
     (f3-trail x)))
 
-(define (f x)
-  (mod (apply + (flatten (idt x))) 2))
-
-
-    
+ 
 (define (f-trail f)
   (let ([f-hist (make-historied f)])
     (λ (x)
       (let ([curr (f-hist x)])
         (list curr (f-hist '()))))))
 (define idt (f-trail id))
-#; (define (f x) (cadr (f2 x)))
-
-#;(define (f x)
-  (let ([acc (make-accumulator 1)])
-    (if (zero? x)
-        (reset-accumulator acc)
-        (acc 1))
-    (let ([y (* x (acc 0))])
-      y)))
 
 (define (sq* x)
   (let ([xs '()])
     (set! xs (cons (sq x) xs))
     xs))
+
+;;(+_lr '(f 0) '(f 1)) ; => 0
+;;(+_rl '(f 0) '(f 1)) ; => 1
+
+;; (+ (f 0) (f 1)) ; => 0, so + is behaving like it evaluates it's arguments left to right.
 
 ; *******************************************
 ; *******************************************
