@@ -283,8 +283,82 @@
 ;;((paul-acc 'rosebud 'deposit) 25) ; => 125
 ;;(peter-acc 'open-sesame 'current-balance) ; 125, so peter has 125 b/c paul put in 25
 
-
 ; *******************************************
+; Ex 3.8
+
+; +_lr is like plus but forces evaluation of e1 first
+(define (+_lr e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
+  (let ([x1 (eval e1)]) ; eval e1 first
+    (let ([x2 (eval e2)])
+      (+ x1 x2))))
+
+(define (+_rl e1 e2) ; e1 and e2 are quoted to delay evaluation so they can be ordered
+  (let ([x2 (eval e2)]) ; eval e2 first
+    (let ([x1 (eval e1)])
+      (+ x1 x2))))
+
+(define (make-list-acc xs)
+  (λ (ys)
+    (set! xs (append ys xs))
+    xs))
+
+(define (g x)
+  (let ([xs (make-list-acc '())][count (make-accumulator 0)])
+    (list (count 1) (xs x))))
+
+(define id (λ (x) x))
+
+(define (make-historied f) ; if x sent to f, returns f(x), otherwise all values sent to x
+  (let ([history (make-list-acc '())])
+    (λ (x)
+      (if (number? x)
+          (begin
+            (history (list x))
+            (f x))
+          (history '())))))
+
+(define (f2 x)
+  (let* ([idh (make-historied id)][curr (idh '())])
+   ; (let ([hist (idh '())])
+    
+      (let ([answer
+             (if (empty? (idh '())) 0 (car (idh '())))])
+        (begin
+          (idh x)
+          (list answer (idh '()))))))
+
+(define (f3 x)
+  (let ([f3-trail (f-trail id)])
+   ; (let ([trail (f3-trail x)])
+    ;  trail)))
+    (f3-trail x)))
+
+(define (f x)
+  (mod (apply + (flatten (idt x))) 2))
+
+
+    
+(define (f-trail f)
+  (let ([f-hist (make-historied f)])
+    (λ (x)
+      (let ([curr (f-hist x)])
+        (list curr (f-hist '()))))))
+(define idt (f-trail id))
+#; (define (f x) (cadr (f2 x)))
+
+#;(define (f x)
+  (let ([acc (make-accumulator 1)])
+    (if (zero? x)
+        (reset-accumulator acc)
+        (acc 1))
+    (let ([y (* x (acc 0))])
+      y)))
+
+(define (sq* x)
+  (let ([xs '()])
+    (set! xs (cons (sq x) xs))
+    xs))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
