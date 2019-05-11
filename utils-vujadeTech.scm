@@ -36,10 +36,8 @@
   (define 1/ (λ (x) (/ 1 x)))
 
   (define (halve x) (/ x 2))
-;  (define (double x) (* x 2)) 
   (define (fst xs) (car xs))
   (define (snd xs) (cadr xs))
-;  (define (zero? x) (= x 0)) ; This is already a racket built in.
   (define (iter f k n)
     (cond [(zero? k) n]
           [(= 1 k) (f n)]
@@ -66,6 +64,7 @@
   (define (smallest-divisor+ n) ; refactor of smallest-divisor
     (find-divisor+ n 2))
   (define (prime?+ n) (= (smallest-divisor+ n) n)) ; improved prime? proc
+  ; Abbreviations since I don't need both in utils, just the improved one.
   (define find-divisor find-divisor+)
   (define smallest-divisor smallest-divisor+)
   (define prime? prime?+)
@@ -87,7 +86,5 @@
     i) ; This didn't work; it appears to be passing by value, which would make sense given
   ; that Scheme is a nearly pure functional language. Of course it's annoying here when
   ; some old school state manipulation using pass by ref would come in handy, but oh Scheme, I can't stay mad at you!!!
-
- ; (define (do f x k)
   
 )
