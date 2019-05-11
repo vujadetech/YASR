@@ -67,22 +67,6 @@
 
 ; *******************************************
 ; Ex 3.3
-#;(define (make-account-with-password balance password)
-  (define (withdraw amount) ; This appears to behave like an OO member function. Ditto for deposit.
-    (if (>= balance amount)
-        (begin (set! balance (- balance amount))
-               balance)
-        "Insufficient funds"))
-  (define (deposit amount)
-    (set! balance (+ balance amount))
-    balance)
-  (define (dispatch m) ; This appears to function like an OO virtual lookup table. And m means "member"?
-    (cond ((eq? m 'withdraw) withdraw)
-          ((eq? m 'deposit) deposit)
-          (else (error "Unknown request -- MAKE-ACCOUNT"
-                       m))))
-  dispatch)
-
 (define (make-account-with-password balance password)
   (let ([acc (make-account balance)])
     (λ (pass-given m) ; Must provide both a pass and m so acc will know whether to dispatch on
@@ -146,24 +130,25 @@
 ;  "Quick! What's the number for 911!?!?!")
 ; *******************************************
 ; Sec 3.1.2 The benefits of introducing assignment,
-; the importance of being earnest, and the politics of dancing. 
+; the importance of being earnest, and the politics of dancing*.
 ; I mean just the first one, sorry for that hilarious joke interruption!
+; * One of the best 80s songs from the 20th century: https://www.youtube.com/watch?v=sRrSwLHyxGc
 
 ; rand-update is from pscholz's github, https://github.com/psholtz/MIT-SICP/tree/master/Section-3.1:
 (define m (expt 2 32))
 (define a 1664525)
 (define b 1013904423)
-(define (rand-update x)
+(define (rand-update x) ; Could also think of this is (next-rand x)
  (let ((m (expt 2 32))
        (a 1664525)
        (b 1013904423))
   (remainder (+ (* a x) b) m)))
 
 ; The book didn't say what value to use for random-init.
-(define random-init 42) 
+(define random-init 42)
 
 (define rand
-  (let ((x random-init))
+  (let ((x random-init)) ; x is like a C++ member variable here? Not sure but this is interesting.
     (lambda ()
       (set! x (rand-update x))
       x)))
@@ -205,6 +190,9 @@
 ; *******************************************
 ; Ex 3.5 Monte Carlo integration, which is not to be confused with
 ; Atlantic City integration, Jersey style. HEY-oh!
+; Apparently an Atlantic City algorithm is an actual thing, though my joke
+; is still a great idea and I stand by: https://en.wikipedia.org/wiki/Atlantic_City_algorithm.
+; The last sentence was inspired by "Focus group" by Tim Robinson: https://www.youtube.com/watch?v=8YDpvMYk5jA
 
 (define (random-in-range low high)
   (let ((range (- high low)))
@@ -216,32 +204,64 @@
 (define (hyp^2 x1 x2 y1 y2) ; (x2 - x1)^2 + (y2 - y1)^2
   (+ (sq (- x2 x1)) (sq (- y2 y1))))
 
-#;(define (in-circle-radius-N? N)
-  (λ (x1 x2 y1 y2)
-    (< (hyp^2 x1 x2 y1 y2) (sq N))))
-
-(define (in-circle-radius-N? N)
+(define (in-circle-radius-R? R)
   (λ (x y)
-    (< (+ (sq x) (sq y)) (sq N))))
+    (< (+ (sq x) (sq y)) (sq R))))
 
-(define icr10? (in-circle-radius-N? 10))
-(define cube-radius-10 (list -10 10 -10 10))
+(define icr10? (in-circle-radius-R? 10))
+(define square-radius-10 (list -10 10 -10 10))
 
-(define (exp10)
+#;(define (exp10)
   (let ([X1 -10] [X2 10] [Y1 -10] [Y2 10] [P icr10?])
     (let ([x (random-in-range X1 X2)] [y (random-in-range Y1 Y2)])
       (icr10? x y))))
-    
+
+(define (experiment-pi R) ; assume circle is radius R at (0,0), region is square bounding the circle
+; experiment is to pick a random (x,y) coordinate in [-R,R] x [-R,R]
+  ; and see if it's in the circle of radius R at (0,0).
+  (let* ([X1 (negative R)][X2 R][Y1 X1][Y2 X2][P (in-circle-radius-R? R)])
+    (let ([x (random-in-range X1 X2)] [y (random-in-range Y1 Y2)])
+      (P x y))))
+
+(define exp10 (experiment-pi 10))
 
 (define (estimate-integral P X1 X2 Y1 Y2 N) ; P = predicate, N = # trials
   (let ([total-area (* (- X2 X1) (- Y2 Y1))])
-   ; (monte-carlo N P)
-    (exact->inexact (monte-carlo N P))))
+   (monte-carlo N P)))
+    
+   ; (let ratio (exact->inexact (monte-carlo N P)))
 
-(define PI (exact->inexact (* 4 (monte-carlo 100 exp10))))
+(define (Pi-ei N [R 10])  ; Pi using estimate-integral, N = # trials
+  (let* ([X1 (negative R)][X2 R][Y1 X1][Y2 X2][P (in-circle-radius-R? R)])
+   ; (estimate-integral (in-circle-radius-R? R) X1 X2 Y1 Y2 N)))
+    (estimate-integral
+     (λ () (experiment-pi R)) ; experiment must be a function of 0 arguments
+      X1 X2 Y1 Y2 N)))
+    
+; (define PI (exact->inexact (* 4 (monte-carlo 100 exp10))))
 ;; PI ; => 3.24 Answer is unfluenced by randomness, so YMMV :)
 
 ; *******************************************
+; Ex 3.6, let's call it rand-with-reset to avoid clobbering rand which is in namespace
+
+(define rand-with-reset
+  (let ([x random-init])
+    (λ (m)
+      (cond
+        [(eq? m 'generate)
+         (begin
+           (set! x (rand-update x))
+           x)]
+        [(eq? m 'reset)
+         (λ (new-seed) (set! x new-seed) new-seed)]
+           ))))
+
+;;(map (λ (_) (rand-with-reset 'generate)) (range 1 5))
+;;(map (λ (_) (rand-with-reset 'generate)) (range 1 5))
+;;((rand-with-reset 'reset) random-init)
+;;(map (λ (_) (rand-with-reset 'generate)) (range 1 5))
+; Last and first "random" lists should be the same: '(1083814473 711399388 3416838739 1642706014)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
