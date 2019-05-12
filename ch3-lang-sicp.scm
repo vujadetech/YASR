@@ -109,8 +109,29 @@ Z2
 ;; (count-pairs z-cycle) ; => starts infinite loop
 ; *******************************************
 ; Ex 3.17
-(define x17 (cons 
 
+; See community.schemewiki.org for this solution.
+; Changed name to do some shameless self-promotion :D
+; If I make any money off it, I'll be happy to share it with the fine folks at schemewiki.org.
+; [Schemewiki.org mini-commercial]
+; Do you like Scheme? And do you like wikis? Then you're gonna LOOOOOOOOVE schemewiki.org!!!
+(define (count-pairs-vujadeTech q) ; Define helper function after acc defined so it will keep updating it.
+  ; Call it q rather than p since it might not be a pair.
+  ; The key is defining the accumulator with a let and then defining a helper function.
+  (let ([acc '()])
+    (define (count-help q)
+      (cond
+        [(not (pair? q)) 0]
+        [(memq q acc) 0] ; already accounted for
+        [else
+           (set! acc (cons q acc))
+         ; (display acc) (newline) ; In case you want to see the acc as it develops.
+           (+ (count-help (car q))
+              (count-help (cdr q))
+              1)]))
+    (count-help q)))
+
+;; (count-pairs-vujadeTech z7) ; => 3
 ; *******************************************
 ; *******************************************
 ; *******************************************
