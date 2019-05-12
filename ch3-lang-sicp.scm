@@ -1,5 +1,7 @@
 #lang sicp
 
+(define (-- k) (- k 1))
+
 ; *******************************************
 ; Ex 3.12
 (define (last-pair x)
@@ -32,6 +34,9 @@
 (define (make-cycle x)
   (set-cdr! (last-pair x) x)
   x)
+
+(define (make-cycle-car x) ; Another way to make cycles where the car has the loop back to itself rather than the cdr.
+  (set-car! (last-pair x) x))
 
 (define z13 (make-cycle (list 'a 'b 'c))) ; z13 is a loop
 ;;(cadddr z13) ; => 'a since it loops back to beginning after 3 cdrs,
@@ -79,23 +84,23 @@
 ; *******************************************
 ; Ex 3.16
 
-(define (count-pairs x)
+(define (count-pairs-ben-bitdiddle x)
   (if (not (pair? x))
       0
-      (+ (count-pairs (car x))
-         (count-pairs (cdr x))
+      (+ (count-pairs-ben-bitdiddle (car x))
+         (count-pairs-ben-bitdiddle (cdr x))
          1)))
 
 (define z3 (cons 1 (cons 2 (cons 3 '()))))
-(count-pairs z3) ; => 3, which is the correct number of pairs in this case.
+(count-pairs-ben-bitdiddle z3) ; => 3, which is the correct number of pairs in this case.
 (define z4 (cons x (cdr x))) ; x is 2 pairs, so z4 makes a 3rd pair...
-(count-pairs z4) ; => 4 rather than 3, which means count-pairs is wrong,
+(count-pairs-ben-bitdiddle z4) ; => 4 rather than 3, which means count-pairs is wrong,
 ; though with a name like "Ben Bitdiddle" that's not a surprise. HEY-oh!
 
 (define x7 (cons 1 2))
 (define y7 (cons x7 x7))
 (define z7 (cons y7 y7))
-(count-pairs z7) ; => 7, rather than 3. This is just modifying z1 above to make it seem like it
+(count-pairs-ben-bitdiddle z7) ; => 7, rather than 3. This is just modifying z1 above to make it seem like it
 ; has more pairs than z1 even though it doesn't.
 
 ; Construct the "never return at all" with big z-cycle in parts: Z1 and Z2
@@ -106,7 +111,7 @@ Z2
 (set-cdr! Z1 Z2)
 (set-cdr! (cdr Z2) Z1)
 (define z-cycle Z1)
-;; (count-pairs z-cycle) ; => starts infinite loop
+;; (count-pairs-ben-bitdiddle z-cycle) ; => starts infinite loop
 ; *******************************************
 ; Ex 3.17
 
@@ -133,6 +138,56 @@ Z2
 
 ;; (count-pairs-vujadeTech z7) ; => 3
 ; *******************************************
+; 3.18
+(define count-pairs count-pairs-vujadeTech)
+
+#;(define (has-cycle? x)
+  (let ([acc '()])
+    (define (has-cycle-h x)
+      (cond
+        [(not (pair? x)) #f]
+       ; [(memq (cdr x) acc)    #t] ;
+       ; [(mem
+        ;[(memq x acc)    #t]
+        [
+         ;(or (memq (car x) acc)
+             (memq (cdr x) acc)
+          ;   )
+         #t]
+        [else
+         (set! acc (cons x acc))
+         (or (has-cycle-h (car x)) (has-cycle-h (cdr x)))]))
+    (has-cycle-h x)))
+
+(define (has-car-eq-y? x y)
+  (cond
+    [(not (pair? x)) #f]
+    [(eq? (car x) y) #t]
+    [else (or (has-car-eq-y? (car x) y) (has-car-eq-y? (cdr x) y))]))
+
+(define (can-reach-itself-k? v k) ; Can node v reach itself within k steps, k > 0?
+  (cond
+    [(zero? k) #f]
+    [(= 1 k) (or (eq? v (car v)) (eq? v (cdr v)))]
+    [else (reachable-k? (car v) v (-- k)) (reachable-k? (cdr v) v (-- k))]))
+
+(define (reachable-k? u v k); is node (pair) v reachable from u in <= k steps where k >= 0?
+  (cond
+    [(eq? u v)        #t] ; if u = v then k is irrelevant since they're the same node which means that v is vacuously reachable from u.
+    [(zero? k) (eq? u v)] ; if k = 0 they must be the same node to be reachable.
+    [(not (pair? u))  #f] 
+    [(= 1 k) (or (eq? (car u) v) (eq? (cdr u) v))]
+    [else (or (reachable-k? (car u) v (-- k)) (reachable-k? (cdr u) v (-- k)))]))
+
+(define (can-reach-itself? v)
+  (let ([k (count-pairs v)])
+    (can-reach-itself-k? v k)))
+
+(define has-cycle? can-reach-itself?)
+
+(define w3 '(a b c))
+(make-cycle w3)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************

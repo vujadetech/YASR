@@ -444,7 +444,8 @@
 
 ; Recall from section 1.3.2 that let is simply syntactic sugar for a procedure call:
 
-; (let ((<var> <exp>)) <body>) is interpreted as an alternate syntax for
+; (let ([<var> <exp>])
+;   <body>) is interpreted as an alternate syntax for
 
 ; ((λ (<var>) <body>) <exp>)
 
