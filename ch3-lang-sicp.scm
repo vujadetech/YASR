@@ -102,7 +102,7 @@
 (count-pairs-ben-bitdiddle z7) ; => 7, rather than 3. This is just modifying z1 above to make it seem like it
 ; has more pairs than z1 even though it doesn't.
 
-; Construct the "never return at all" with big z-cycle in parts: Z1 and Z2
+; Construct the "never return at all" with z-cycle in parts: Z1 and Z2.
 (define Z1 (cons 'a '()))
 (define Z2 (cons 'b (cons 'c '())))
 Z1
@@ -136,27 +136,17 @@ Z2
     (count-help q)))
 
 ;; (count-pairs-vujadeTech z7) ; => 3
+
+; Abstract count-pairs to arbitrary proc, call it map-cell (cell is either a pair or just an atom like a num or symbol).
+; TODO
+#;(define (map-pair proc q ) ; q could be a pair
+  (let ([acc nil])
+    ()))
+
+
 ; *******************************************
 ; 3.18
 (define count-pairs count-pairs-vujadeTech)
-
-#;(define (has-cycle? x)
-  (let ([acc '()])
-    (define (has-cycle-h x)
-      (cond
-        [(not (pair? x)) #f]
-       ; [(memq (cdr x) acc)    #t] ;
-       ; [(mem
-        ;[(memq x acc)    #t]
-        [
-         ;(or (memq (car x) acc)
-             (memq (cdr x) acc)
-          ;   )
-         #t]
-        [else
-         (set! acc (cons x acc))
-         (or (has-cycle-h (car x)) (has-cycle-h (cdr x)))]))
-    (has-cycle-h x)))
 
 (define (has-car-eq-y? x y)
   (cond
@@ -189,9 +179,118 @@ Z2
 (make-cycle w3)
 
 ; *******************************************
+; Ex 3.19 TODO
+(define (car-or-cdr-is-pair? p) ; assume p is a pair, => #t iff (cdr p) is a pair (car p) is a pair
+  (or (pair? (car p)) (pair? (cdr p))))
+
+(define (terminal-node? p) ; either p isn't a pair, or it is but neither it's car nor cdr is a pair.
+  (or (not (pair? p)) (not (car-or-cdr-is-pair? p))))
+
+(define (non-terminal-node? p) (not (terminal-node? p)))
+
+(define (delete-leafs p) ; delete terminal-nodes from p, or leafs for short
+  (let ([acc '()])
+    (define (delete-help p)
+      (cond
+        [(not (pair? p)) p]
+      ;  [(memq q acc) 0] ; already accounted for
+        [(terminal-node? p) p] ; p is a pair but it's terminal, so neither car nor cdr are pairs.
+        ; So now p has a pair in the car or cdr (or both).
+        [(terminal-node? (car p)) (cons p (delete-leafs (cdr p)))] ;  (set-car! p nil)]
+        [(terminal-node? (cdr p)) (set-cdr! p nil)]
+        [else (error "delete-leafs")]))
+    (delete-help p)))
+
+(define (delete-leafs2 p) ; delete terminal-nodes from p, or leafs for short
+  (let ([acc '()])
+    (define (delete-help p)
+      (cond
+        [(or (not (pair? p)) (terminal-node? p)) acc]
+      ;  [(memq q acc) 0] ; already accounted for
+    ;    [(terminal-node? p) p] ; p is a pair but it's terminal, so neither car nor cdr are pairs.
+        ; So now p has a pair in the car or cdr (or both).
+   ;     [(terminal-node? (car p)) (cons p (delete-leafs (cdr p)))] ;  (set-car! p nil)]
+   ;     [(terminal-node? (cdr p)) (set-cdr! p nil)]
+        [else
+         (set! acc (cons p acc))
+         (set-cdr! p (delete-leafs2 (cdr p)))
+         acc]))
+    (if (terminal-node? p)
+        p
+        (delete-help p))))
+
+;(define (prune x) (set! x nil))
+(define (prune-cdr x) (set-cdr! x nil))
+(define (prune-car x) (set-car! x nil))
+
 ; *******************************************
+; Ex 3.20 NA
 ; *******************************************
+; 3.3.2  Representing Queues
+; Is it just me or does the word "queues" have too many vowels?
+
+; ADT:
+(define (make-queue) (cons nil nil))
+(define (empty-queue? queue) (null? (front-ptr queue)))
+(define empty-q? empty-queue?)
+; (front-queue <queue>)
+; returns the object at the front of the queue, signaling an error if the queue is empty; it does not modify the queue.
+(define (front-queue queue)
+  (if (empty-q? queue)
+      (error "front-queue: Q is empty" queue)
+      (car (front-ptr queue))))
+(define front-q front-queue)
+; (insert-queue! <queue> <item>)
+; inserts the item at the rear of the queue and returns the modified queue as its value.
+(define (insert-queue! q item)
+  (let ([new-pair (cons item '())])
+    (cond ; 2 cases, q empty or not:
+      [(empty-q? q) (set-front-ptr! q new-pair)
+                    (set-rear-ptr!  q new-pair)
+                    q]
+      [else (set-cdr! (rear-ptr q) new-pair)
+            (set-rear-ptr! q new-pair)
+            q])))
+(define insert-q! insert-queue!)
+
+; (delete-queue! <queue>)
+; removes the item at the front of the queue and returns the modified queue as its value, signaling an error if the queue is empty before the deletion.
+(define (delete-queue! q)
+  (if (empty-q? q)
+      (error "Delete called on empty q, " q)
+      (set-front-ptr! q (cdr (front-ptr q))))
+  q)
+(define delete-q! delete-queue!)
+
+; pointer implementation:
+(define (front-ptr queue) (car queue))
+(define (rear-ptr queue) (cdr queue))
+(define (set-front-ptr! queue item) (set-car! queue item))
+(define (set-rear-ptr!  queue item) (set-cdr! queue item))
+
+; Example q
+(define q (make-queue))
+(insert-queue! q 'a)	
+(insert-queue! q 'b)	
+;(delete-queue! q)	
+(insert-queue! q 'c)	
+(insert-queue! q 'd)
+;(delete-queue! q)
+
+
 ; *******************************************
+; Ex 3.21
+#;(define (print-queue q)
+  (cond
+    [(empty-q? q) (display nil)]
+    [else (display (front-q q))
+          (set-front-ptr! q (cdr (front-ptr q)))
+          (display q)]))
+
+(define (print-queue q) ; Just display the front-ptr since it has the list of all items.
+  (display (front-ptr q)))
+(define print-q print-queue)
+      
 ; *******************************************
 ; *******************************************
 ; *******************************************
