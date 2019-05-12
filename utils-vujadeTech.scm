@@ -7,7 +7,10 @@
            next-odd find-divisor smallest-divisor prime?
            ^ remove-once lg_ lg- alphabet
            ; Ch 3
-           +=!
+           var! +=! ++!
+          ; nand
+           
+           ; blerg
            )
 
   (define (vujadeTech)
@@ -75,16 +78,34 @@
       [(memq x (list (car xs))) (cdr xs)]
       [(cons (car xs) (remove-once x (cdr xs)))]))
   (define ^ expt)
+  ; Note: lg isn't defined in order to be explicit about whether to round non-integer values up or down.
   (define lg_ (λ (n) (inexact->exact (floor (log n 2)))))   ; floor of log base 2
   (define lg- (λ (n) (inexact->exact (ceiling (log n 2))))) ; ceiling of log base 2
   (define alphabet '(a b c d e f g h i j k l m n o p q r s t u v w x y z))
 
   ; Chapter 3:
-  (define (+=! i bump) ; Ripoff of C++ i += bump. Since we appear to be going C++/Java, we may as well
+  #;(define (+=! i bump) ; Ripoff of C++ i += bump. Since we appear to be going C++/Java, we may as well
     ; use their established and succinct idioms. Add ! to indicate it's destructive.
     (set! i (+ i bump))
-    i) ; This didn't work; it appears to be passing by value, which would make sense given
+    ) ; This didn't work; it appears to be passing by value, which would make sense given
   ; that Scheme is a nearly pure functional language. Of course it's annoying here when
   ; some old school state manipulation using pass by ref would come in handy, but oh Scheme, I can't stay mad at you!!!
+  ; One way to do it is to wrap the variable in a function that keeps track of the state in a value K:
+  (define (var! K) ; create mutable var as a constant function K
+    (define (get) K)
+    (define (set new-val) (set! K new-val))
+    (define (dispatch m)
+      (cond
+        [(eq? m 'get) (get)]
+        [(eq? m 'set) set]
+        [else (error "var! K")]
+        ))
+    dispatch)
+  
+  (define (+=! x k) ; x += k, mutating x which must have been created with (var! K) for a number K.
+    ((x 'set) (+ (x 'get) k)))
+  (define (++! x) (+=! x 1))
+
+ ; (define (nand x y) (not (and x y)))
   
 )
