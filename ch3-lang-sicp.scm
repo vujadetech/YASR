@@ -1,6 +1,5 @@
 #lang sicp
 (#%require "utils-vujadeTech.scm")
-(define (-- k) (- k 1))
 
 ; *******************************************
 ; Ex 3.12
