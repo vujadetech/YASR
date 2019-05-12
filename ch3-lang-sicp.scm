@@ -1,5 +1,5 @@
 #lang sicp
-
+(#%require "utils-vujadeTech.scm")
 (define (-- k) (- k 1))
 
 ; *******************************************
@@ -183,12 +183,11 @@ Z2
   (let ([k (count-pairs v)])
     (can-reach-itself-k? v k)))
 
-(define has-cycle? can-reach-itself?)
+(define (has-cycle? v)
+  (or (can-reach-itself? v) (has-cycle? (car v)) (has-cycle? (cdr v))))
 
 (define w3 '(a b c))
 (make-cycle w3)
-
-
 
 ; *******************************************
 ; *******************************************
