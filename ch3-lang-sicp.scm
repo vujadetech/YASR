@@ -442,8 +442,97 @@ Z2
 (insert! 'a 1 t)
 ;(insert! 'b 2 t)
 ;(insert! 'c 3 t)
-
 (assoc 'a (cdr t))
+
+; *******************************************
+; Two-dimensional tables
+
+; When we look up an item, we use the first key to identify the
+; correct subtable. Then we use the second key to identify the
+; record within the subtable.
+
+(define (lookup-2d key-1 key-2 table)
+  (let ((subtable (assoc key-1 (cdr table))))
+    (if subtable
+        (let ((record (assoc key-2 (cdr subtable))))
+          (if record
+              (cdr record)
+              false))
+        false)))
+
+(define (insert-2d! key-1 key-2 value table)
+  (let ((subtable (assoc key-1 (cdr table))))
+    (if subtable
+        (let ((record (assoc key-2 (cdr subtable))))
+          (if record
+              (set-cdr! record value)
+              (set-cdr! subtable
+                        (cons (cons key-2 value)
+                              (cdr subtable)))))
+        (set-cdr! table
+                  (cons (list key-1
+                              (cons key-2 value))
+                        (cdr table)))))
+  'ok)
+
+(define t2d (make-table))
+(insert-2d! 'trump 'hair "Eagles soar!" t2d)
+(insert-2d! 'trump 'golf "Best in world" t2d)
+(insert-2d! 'car 'smell "Stinky!" t2d)
+;(insert-2d! 'car 'size  "too small" t2d)
+;(insert-2d! 'car 'steering-wheel  "A GREAT steering wheel that won't WHIFF out the window while I driving." t2d)
+;(insert-2d! 'car 'why-no-good-ideas? "B/c Paul keep farting!" t2d)
+(insert-2d! 'paul 'wife "Mother in law!" t2d)
+;(lookup-2d  'car 'size t2d)
+;(insert-2d! 'trump 'size "YUUUGE!" t2d)
+
+
+; *******************************************
+; Creating local tables
+
+(define (make-table-local)
+  (let ((local-table (list '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)    
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            ((eq? m 'get-table) local-table)
+            (else (error "Unknown operation -- TABLE" m))
+            ))
+    
+    dispatch))
+
+; Using make-table, we could implement the get and put operations used in section 2.4.3 for data-directed programming, as follows:
+
+(define operation-table (make-table-local))
+(define opt operation-table)
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+(define get-table (opt 'get-table))
+
+(put 'a "b" 1)
+
 
 ; *******************************************
 ; Ex 3.24
@@ -492,10 +581,18 @@ Z2
 
 (define tg2 (make-table-g (equal-ish? 3)))
 ((tg2 'insert!) 5 'a)
-((tg2 'lookup) 8) ; => 'a since it's in tolerance of 3
-((tg2 'lookup) 9) ; => #f, outside the tolerance
+;;((tg2 'lookup) 8) ; => 'a since it's in tolerance of 3
+;;((tg2 'lookup) 9) ; => #f, outside the tolerance
 
 ; *******************************************
+; Ex 3.25 TODO
+; One can use a normal table and store the list as the key for the value.
+; Not sure what this one is asking for.
+
+(insert! '(trump hair) "eagles soar" t)
+(insert! '(car smell)  "stinky" t)
+;; (lookup '(car smell) t) ; => "stinky"
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
