@@ -453,10 +453,52 @@
 ; Ex 3.11 NA show ENVs
 ; *******************************************
 ; Ex 3.12 See ch3-lang-sicp.scm.
+; *******************************************
+; *******************************************
+; Representing Tables
 
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
 
+(define (assoc key records [pred equal?])
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+; To insert a value in a table under a specified key, we first use assoc to see if there is already a record in the table with this key. If not, we form a new record by consing the key with the value, and insert this at the head of the table's list of records, after the dummy record. If there already is a record with this key, we set the cdr of this record to the designated new value. The header of the table provides us with a fixed location to modify in order to insert the new record.25
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value) (cdr table)))))
+  'ok)
+
+; To construct a new table, we simply create a list containing the symbol *table*:
+
+(define (make-table) (list '*table*))
+
+(define t (make-table))
+;(insert! 'a 1 t)
+;(insert! 'b 2 t)
+;(insert! 'c 3 t)
+
+;(assoc 'b (cdr t))
 
 ; *******************************************
+; Ex 3.24
+(define (make-table-g same-key?) ; Generic version of make-table
+  (let ([foo 42])
+    ; member functions
+    
+
+    ; dispatch
+  0))
+  
 ; *******************************************
 ; *******************************************
 ; *******************************************

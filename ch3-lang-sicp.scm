@@ -1,4 +1,5 @@
 #lang sicp
+; (#%require racket/base)
 (#%require "utils-vujadeTech.scm")
 
 ; *******************************************
@@ -409,7 +410,91 @@ Z2
 (print-dq dq)
 
 ; *******************************************
+; Representing Tables
+
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+
+
+(define (assoc key records); [pred equal?])
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+; To insert a value in a table under a specified key, we first use assoc to see if there is already a record in the table with this key. If not, we form a new record by consing the key with the value, and insert this at the head of the table's list of records, after the dummy record. If there already is a record with this key, we set the cdr of this record to the designated new value. The header of the table provides us with a fixed location to modify in order to insert the new record.25
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value) (cdr table)))))
+  'ok)
+
+; To construct a new table, we simply create a list containing the symbol *table*:
+
+(define (make-table) (list '*table*))
+
+(define t (make-table))
+(insert! 'a 1 t)
+;(insert! 'b 2 t)
+;(insert! 'c 3 t)
+
+(assoc 'a (cdr t))
+
 ; *******************************************
+; Ex 3.24
+
+(define (assoc-pred key records pred?)
+  (cond ((null? records) false)
+        ((pred? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (insert-pred! pred? table) ; 
+  (lambda (key value) ; table not needed since it's wrapped in a table object
+    (let ((record (assoc-pred key (cdr table) pred?)))
+      (if record
+          (set-cdr! record value)
+          (set-cdr! table
+                    (cons (cons key value) (cdr table)))))
+    'ok))
+
+(define (lookup-pred pred? table)
+  (lambda (key)
+    (let ((record (assoc-pred key (cdr table) pred?)))
+      (if record
+          (cdr record)
+          false))))
+
+(define (make-table-g same-key?) ; Generic version of make-table
+  (let ([T (make-table)])
+    ; member functions
+    
+    ; dispatch
+    (define (dispatch m)
+      (cond
+        [(eq? m 'get-table) T]
+        [(eq? m 'insert!) (insert-pred! same-key? T)]
+        [(eq? m 'lookup)  (lookup-pred  same-key? T)]
+        
+        [else (error "Dispatch make-table-g")]
+        ))
+  dispatch))
+
+(define (equal-ish? tolerance)
+  (lambda (x y) (<= (abs (- x y)) tolerance)))
+
+(define tg (make-table-g equal?)) ; table generic
+;;((tg 'insert!) 'a 1)
+
+(define tg2 (make-table-g (equal-ish? 3)))
+((tg2 'insert!) 5 'a)
+((tg2 'lookup) 8) ; => 'a since it's in tolerance of 3
+((tg2 'lookup) 9) ; => #f, outside the tolerance
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
