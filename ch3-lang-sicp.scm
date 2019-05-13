@@ -277,7 +277,6 @@ Z2
 (insert-queue! q 'd)
 ;(delete-queue! q)
 
-
 ; *******************************************
 ; Ex 3.21
 #;(define (print-queue q)
@@ -292,5 +291,52 @@ Z2
 (define print-q print-queue)
       
 ; *******************************************
+; Ex 3.22
+; A queue is represented, then, as a pair of pointers, front-ptr
+; and rear-ptr, which indicate, respectively, the first and
+; last pairs in an ordinary list. 
+(define (make-Q)
+  (let ([front-ptr nil][rear-ptr nil]) ; [q (cons front-ptr rear-ptr)])
+    (define (get-q) (cons front-ptr rear-ptr))
+    (define (empty-q?) (null? front-ptr))
+    (define (front-q)
+      (if (empty-q?) (error "empty Q, no front")
+          (car front-ptr)))
+    (define (insert-q! item)
+      (let ([new-pair (cons item nil)])
+        (cond
+          [(empty-q?) (set! front-ptr new-pair)
+                      (set! rear-ptr  new-pair)
+                      (get-q)]
+          [else (set-cdr! rear-ptr new-pair)
+                (set! rear-ptr new-pair)
+                (get-q)])))
+    (define (delete-q!)
+      (cond
+        [(empty-q?) (error "delete-q! in make-Q")]
+        [else
+         (set! front-ptr (cdr front-ptr))
+         (get-q)] ; 
+         
+      )); end define delete-q!
+    (define (print-q) (display front-ptr) (newline))
+            
+    (define (dispatch m)
+      (cond
+        [(eq? m 'empty-q?) (empty-q?)]
+        [(eq? m 'front-q)   (front-q)]
+        [(eq? m 'insert-q!) insert-q!]
+        [(eq? m 'delete-q!) (delete-q!)]
+        [(eq? m 'print-q)   (print-q)]
+        [else (error "dispatch of make-Q")])
+      ) ; end define dispatch
+    dispatch))
+
+(define q22 (make-Q))
+((q22 'insert-q!) 1)
+((q22 'insert-q!) 2)
+(q22 'print-q)
+(q22 'delete-q!)
+  
 ; *******************************************
 ; *******************************************
