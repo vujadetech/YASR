@@ -287,7 +287,8 @@ Z2
           (display q)]))
 
 (define (print-queue q) ; Just display the front-ptr since it has the list of all items.
-  (display (front-ptr q)))
+    (display (front-ptr q))
+    (newline))
 (define print-q print-queue)
       
 ; *******************************************
@@ -317,8 +318,7 @@ Z2
         [else
          (set! front-ptr (cdr front-ptr))
          (get-q)] ; 
-         
-      )); end define delete-q!
+      )) ; end define delete-q!
     (define (print-q) (display front-ptr) (newline))
             
     (define (dispatch m)
@@ -338,5 +338,86 @@ Z2
 (q22 'print-q)
 (q22 'delete-q!)
   
+; *******************************************
+; Ex 3.23, Deque
+; Leverage make-queue so you DRY.
+(define (make-deque) (make-queue))
+(define (empty-deque? deque) (empty-queue? deque))   (define empty-dq? empty-deque?)
+(define (front-deque deque)  (front-queue  deque))   (define front-dq front-deque)
+(define (rear-deque deque)
+  (if (empty-dq? deque)
+      (error "deque empty" deque)
+      (car (rear-ptr-dq deque))))
+(define rear-insert-deque! insert-queue!)
+(define (front-insert-deque! deque item)
+  (let ([new-pair (cons item nil)])
+    (cond
+      [(empty-dq? deque) (rear-insert-deque! deque item)]
+      [else (set-cdr! new-pair (front-ptr-dq deque))
+            (set-front-ptr-dq! deque new-pair)
+            deque])))
+(define front-delete-deque! delete-queue!)
+
+(define (delete-last! xs) ; assume xs non-empty. Delete last and return ptr to the new last.
+  (let ([next-to-last xs]) ; may not need this var
+    (define (del-last-h xs ptr)
+      (cond
+        [(null? (cddr ptr)) (set-cdr! ptr nil)
+                             ptr]
+        [else (set! ptr (cdr ptr))
+              (del-last-h xs ptr)
+              ]
+        )) ; del-last-h
+    (if (null? (cdr xs)) 
+        (begin
+          (set! xs nil)
+          (display xs)
+          )
+        (del-last-h xs xs)) ; end if
+    ))
+
+(define (rear-delete-deque! deque) ; This is O(n) rather than O(1).
+  (cond
+    [(empty-dq? deque) (error "rear-delete")]
+    [(null? (cdr (front-ptr-dq deque))) ; could also just make-queue here
+     (set-front-ptr-dq! deque nil)
+     (set-rear-ptr-dq!  deque nil)
+     deque]
+    [else
+     (set-rear-ptr-dq! deque (delete-last! (front-ptr-dq deque)))]))
+    
+  
+(define print-dq print-q)
+
+; pointer implementation:
+(define front-ptr-dq front-ptr)
+(define rear-ptr-dq  rear-ptr )
+(define set-front-ptr-dq! set-front-ptr!)
+(define set-rear-ptr-dq!  set-rear-ptr!)
+(define front-delete-dq!  delete-q!)
+
+(display "DQ")(newline)
+(define dq (make-deque))
+(print-dq dq)
+(front-insert-deque! dq 3)
+(print-dq dq)
+(rear-insert-deque! dq 1)
+(print-dq dq)
+(front-insert-deque! dq 2)
+(print-dq dq)
+(front-delete-deque! dq)
+(print-dq dq)
+
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
+; *******************************************
 ; *******************************************
 ; *******************************************
