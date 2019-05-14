@@ -593,6 +593,122 @@ Z2
 (insert! '(car smell)  "stinky" t)
 ;; (lookup '(car smell) t) ; => "stinky"
 
+; yccsml.com version, refactor to use lookup from SICP.
+#;(define (insert*! ks value table) ; ks = non-empty keylist
+  (if (null? (cdr ks))
+      (insert! (car ks) value table)
+      0))
+      
+; Meta-table: a table of tables; table-name-val = (pair table-name value), value=nil means unassigned
+; Better than a nosql database :D
+(define TABLE-LABEL '*table*) ; Might want to change this later to *meta-table*.
+(define VALUE-LABEL '*val*)
+;(define (make-meta-table table-name table-value) ; e.g. if inserting 'a 1, table-name is 'a.
+ ; (list (list '*table* table-name table-value)))
+ ; (cons (list '*table* table-name) table-value))
+;(define root (make-meta-table 'root 'table))
+;(define (get-table-name table) (cadar table))
+;(define (get-table-value table) (cddar table))
+;(get-table-name root)
+
+(define (make-meta-table table-name)   
+  (list (cons '*table* table-name))) ; still calling it *table* for simplicity,
+; but all *table*s are in fact meta-tables.
+
+;(cons (list '*table* table-name) table-value))
+(define troot (make-meta-table 'root))
+(define ta (make-meta-table 'a))
+(insert! VALUE-LABEL 1 ta)
+(insert! ta nil troot)
+(define tab (make-meta-table 'ab))
+(insert! VALUE-LABEL 2 tab)
+(insert! tab nil ta)
+;(insert! tb nil troot)
+(define tc (make-meta-table 'c))
+(insert! VALUE-LABEL 3 tc)
+(insert! tc nil troot)
+
+(lookup '((TABLE-LABEL . a) (VALUE-LABEL . 1)) troot) ; => '()
+
+;(define (get-table-name table) (cdar table))
+(define (get-table-name table) (cdr (assoc TABLE-LABEL table)))
+
+; Meta-tables have 2 ways to lookup: a value or a meta-subtable.
+(define (lookup-value table) ; only one key possible: VALUE-LABEL. Table must be the correct subtable.
+  (lookup VALUE-LABEL table))
+#;(define (lookup-subtable sub-name table) ; sub-name is just the atom, like 'a, not '(TABLE-LABEL, a)
+; (let ([key (cons TABLE-LABEL sub-name)])
+    (let ([record (assoc-meta sub-name (cdr table))])
+      (if record
+          (cdr record) ; or (cdr record)?
+          #f)))
+(define (lookup-subtable sub-name table)
+  (assoc-meta sub-name table))
+
+(define (records table) (cdr table))
+
+#;(define (lookup-meta key table) ; returns the value if key = VALUE-LABEL and the subtable o.w.
+  (if (eq? key VALUE-LABEL)
+      (lookup-value table)
+      (lookup-subtable key table)))
+
+(define (lookup-meta key table) ; returns the value or the subtable if key != VALUE-LABEL
+  (if (eq? key VALUE-LABEL)
+      (lookup-value table)
+      (assoc-meta key (cdr table))))
+
+(define (lookup* keys table) ; keys is the list of keys, assume non-empty
+  (let* ([k1 (car keys)][t1 (lookup-meta k1 table)])
+    (cond
+      ; If only 1 key, then looking up the value of the table itself
+      [(null? (cdr keys)) (lookup-meta VALUE-LABEL t1)]  ; lookup-meta?  (lookup-value (lookup-subtable (car k1)))]
+      [else (lookup* (cdr keys) t1)])))
+  
+
+(assoc '(*table* . a) (cadr troot)) ; => ((*table* . a) (*val* . 1))
+(define meta-records (cdr troot))
+
+; To assoc to value, key=VALUE-LABEL and records is the subtable with the needed records.
+; Else it will return the subtable records.
+(define (assoc-meta key records) ; key = value, call normal assoc, else assoc-sub
+  (if (eq? key VALUE-LABEL) ; This check may not be necessary b/c of lookup-value
+      (assoc key records)
+      (assoc-meta-sublabel (cons TABLE-LABEL key) records)))
+
+; passes in sublabel
+(define (assoc-meta-sublabel sublabel meta-records)
+  (if (null? meta-records)
+      #f
+      (let ([first-assoc (assoc sublabel (car meta-records))])
+        (cond
+          [first-assoc first-assoc]
+          [else (assoc-meta-sublabel sublabel (cdr meta-records))]))))
+
+(define (make-table-label table-name) (cons TABLE-LABEL table-name))
+;(define (is-table?) (
+;  (assoc '(*table* . c) (car records)) => table
+(define (assoc-sub sub-label records) ; get entire subtable from records
+  ; sub-name is just the atom, like 'a. sub-label=(TABLE-LABEL . 'a)
+;  (let ([sub-label (cons TABLE-LABEL sub-name)])
+    (assoc sub-label (car records)))
+
+(define (get-subtable sub-label records)
+  (let ([first-subtable (caar records)])
+    (assoc sub-label records)))
+
+;(get-table-name table-root)
+;(define (get-table-value table) (cddar table))
+
+(define (insert*! ks value meta-table)
+  (let ([key1 (car ks)])
+    (cond
+      [(null? (cdr ks)) (insert! key1 value meta-table)]
+      [else 0])))
+
+;(define m1 '((*table* root table) ((*table* 'a 1))))
+
+
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
