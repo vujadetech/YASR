@@ -2,6 +2,10 @@
 ; (#%require racket/base)
 (#%require "utils-vujadeTech.scm")
 
+; FOLD:
+;(#%require srfi/1)
+(#%require rnrs/lists-6)
+
 ; *******************************************
 ; Ex 3.12
 (define (last-pair x)
@@ -603,6 +607,11 @@ Z2
 ; Better than a nosql database :D
 (define TABLE-LABEL '*table*) ; Might want to change this later to *meta-table*.
 (define VALUE-LABEL '*val*)
+
+(define (make-table-label name) (cons TABLE-LABEL name))
+(define (get-table-name table)
+  (let ([table-name (cdr (assoc TABLE-LABEL table))])
+    (if table-name table-name (error "get-table-name" table))))
 ;(define (make-meta-table table-name table-value) ; e.g. if inserting 'a 1, table-name is 'a.
  ; (list (list '*table* table-name table-value)))
  ; (cons (list '*table* table-name) table-value))
@@ -610,6 +619,10 @@ Z2
 ;(define (get-table-name table) (cadar table))
 ;(define (get-table-value table) (cddar table))
 ;(get-table-name root)
+
+(define (insert-subtable! subtable table) ;
+;  (set-cdr! table subtable))
+  (insert! (get-table-name subtable) subtable table))
 
 (define (make-meta-table table-name)   
   (list (cons '*table* table-name))) ; still calling it *table* for simplicity,
@@ -619,19 +632,24 @@ Z2
 (define troot (make-meta-table 'root))
 (define ta (make-meta-table 'a))
 (insert! VALUE-LABEL 1 ta)
-(insert! ta nil troot)
+;(insert! ta (make-table-label 'a) troot)
+(insert-subtable! ta troot)
+;(insert-subtable! ta troot)
 (define tab (make-meta-table 'ab))
 (insert! VALUE-LABEL 2 tab)
-(insert! tab nil ta)
+;(insert! tab 'table-ab ta)
+(insert-subtable! tab ta)
+
 ;(insert! tb nil troot)
 (define tc (make-meta-table 'c))
 (insert! VALUE-LABEL 3 tc)
-(insert! tc nil troot)
+;(insert! tc 'table-c troot)
+(insert-subtable! tc troot)
 
 (lookup '((TABLE-LABEL . a) (VALUE-LABEL . 1)) troot) ; => '()
 
 ;(define (get-table-name table) (cdar table))
-(define (get-table-name table) (cdr (assoc TABLE-LABEL table)))
+
 
 ; Meta-tables have 2 ways to lookup: a value or a meta-subtable.
 (define (lookup-value table) ; only one key possible: VALUE-LABEL. Table must be the correct subtable.
@@ -642,41 +660,117 @@ Z2
       (if record
           (cdr record) ; or (cdr record)?
           #f)))
-(define (lookup-subtable sub-name table)
+#;(define (lookup-subtable sub-name table)
   (assoc-meta sub-name table))
 
 (define (records table) (cdr table))
 
-#;(define (lookup-meta key table) ; returns the value if key = VALUE-LABEL and the subtable o.w.
+#;(define (lookup-meta key table) ; returns the value if key = VALUE-LABEL and the subtable o.w. OR #f if not there
   (if (eq? key VALUE-LABEL)
       (lookup-value table)
       (lookup-subtable key table)))
 
-(define (lookup-meta key table) ; returns the value or the subtable if key != VALUE-LABEL
+#;(define (lookup-meta key table) ; returns the value or the subtable if key != VALUE-LABEL
   (if (eq? key VALUE-LABEL)
       (lookup-value table)
       (assoc-meta key (cdr table))))
 
-(define (lookup* keys table) ; keys is the list of keys, assume non-empty
-  (let* ([k1 (car keys)][t1 (lookup-meta k1 table)])
-    (cond
-      ; If only 1 key, then looking up the value of the table itself
-      [(null? (cdr keys)) (lookup-meta VALUE-LABEL t1)]  ; lookup-meta?  (lookup-value (lookup-subtable (car k1)))]
-      [else (lookup* (cdr keys) t1)])))
-  
+#;(define (lookup* keys table) ;
+  (if (null? keys)
+      #f
+      (let* ([k1 (car keys)][t1 (lookup-meta k1 table)]) ; t1 could be a value or a sub-table, or #f
+        (if (not t1)
+            #f
+            (cond
+              ; If only 1 key, then looking up the value of the table itself
+              [(null? (cdr keys)) (lookup-meta VALUE-LABEL t1)]  ; lookup-meta?  (lookup-value (lookup-subtable (car k1)))]
+              [t1 (lookup* (cdr keys) t1)]
+              [else #f])))))
 
-(assoc '(*table* . a) (cadr troot)) ; => ((*table* . a) (*val* . 1))
+(define (lookup* keys table)
+  (if (null? keys) #f
+      (let* ([k1 (car keys)][t1 (get-subtable k1 table)]) ; t1 is false if sub-table doesn't exist
+        (cond
+          [(not t1) #f] ; if no subtable, no values brah
+          [(null? (cdr keys)) (lookup VALUE-LABEL t1) ] ; could also do   (lookup-value t1)
+          [else (lookup* (cdr keys) t1)]))))
+;(define (has-subtable? sub-name table)
+
+(define (get-smallest-subtable keys table) ; in case there is no subtable with all the keys, return the one with the most
+  (let ([acc '()])
+    0))
+  
+(define (get-subtable* keys table) ; or empty-table if not there
+  (fold-right get-subtable table (reverse keys)))
+
+(define (display-note note val)
+  (display note)(display val)(newline))
+
+(define (get-subtable-acc-keys keys table  acc)
+  (display-note " keys, acc: " (cons (list 'keys keys) (list 'acc  acc)))
+  (if (null? keys) acc
+      (let* ([k1 (car keys)][t1 (get-subtable k1 table)])
+        (display-note "t1: " t1)
+        (cond        
+          [(empty-table? t1) acc]
+          [else (get-subtable-acc-keys (cdr keys) t1 (cons k1 acc))]))))
+
+(define (get-subtable-acc keys table keys-acc) ; table-acc)
+; keys-acc to accumulate keys that worked, table-acc is table for that set of keys
+  (if (null? keys) (cons keys-acc table)
+      (let* ([k1 (car keys)][t1 (get-subtable k1 table)])
+        (cond
+          [(empty-table? t1) (cons keys-acc table)] ; k1 failed so return keys-acc and table (since t1 failed).
+     ;     [(null? (cdr keys))
+          [else ; t1 exists so k1 worked and t1 is new table-acc.
+           ;(cons k1 keys-acc)
+         ;  (display "t1 ")
+         ;  (display t1)(newline)
+          ; (display "tacc")(display table-acc)(newline)
+         ; (get-subtable-acc (cdr keys) t1 (cons k1 keys-acc) (cons t1 table-acc))]))))
+           (get-subtable-acc (cdr keys) t1 (cons k1 keys-acc))]))))
+
+;(define (get-subtable*-h keys good-keys table) ; 
+
+(define (get-record keys table) ; return whole record so it can be updated or looked up
+  (let ([subtable (get-subtable* keys table)])
+    (if empty-table? #f
+        subtable)))
+  
+;#(define (update* keys new-val table) ; assume it's present or update wouldn't be called
+  
+  
+(define empty-table (make-meta-table 'empty))
+(define (empty-table? table) (equal? table empty-table))
+(define (get-subtable sub-name table) ; returns #f if subtable not there.
+  (let [(subtable (lookup sub-name table))]
+    (if subtable subtable empty-table)))
+#;(define (get-subtable-acc sub-name table acc) ;
+  (let [(subtable (lookup sub-name table))]
+    (cond
+      [subtable ; if subtable
+       (cons sub-name acc)
+       subtable]
+      [else acc])))
+
+;(assoc '(*table* . a) (cadr troot)) ; => ((*table* . a) (*val* . 1))
 (define meta-records (cdr troot))
+(define (records? xs)
+  (cond [(not (list? xs)) #f]
+        [(not (pair? (car xs))) #f]
+        [else (records? (cdr xs))]))
 
 ; To assoc to value, key=VALUE-LABEL and records is the subtable with the needed records.
 ; Else it will return the subtable records.
-(define (assoc-meta key records) ; key = value, call normal assoc, else assoc-sub
-  (if (eq? key VALUE-LABEL) ; This check may not be necessary b/c of lookup-value
-      (assoc key records)
-      (assoc-meta-sublabel (cons TABLE-LABEL key) records)))
+#;(define (assoc-meta key records) ; key = value, call normal assoc, else assoc-sub
+  (if (not (records? xs))
+      #f
+      (if (eq? key VALUE-LABEL) ; This check may not be necessary b/c of lookup-value
+          (assoc key records)
+          (assoc-meta-sublabel (cons TABLE-LABEL key) records))))
 
 ; passes in sublabel
-(define (assoc-meta-sublabel sublabel meta-records)
+#;(define (assoc-meta-sublabel sublabel meta-records)
   (if (null? meta-records)
       #f
       (let ([first-assoc (assoc sublabel (car meta-records))])
@@ -684,15 +778,15 @@ Z2
           [first-assoc first-assoc]
           [else (assoc-meta-sublabel sublabel (cdr meta-records))]))))
 
-(define (make-table-label table-name) (cons TABLE-LABEL table-name))
+;(define (make-table-label table-name) (cons TABLE-LABEL table-name))
 ;(define (is-table?) (
 ;  (assoc '(*table* . c) (car records)) => table
-(define (assoc-sub sub-label records) ; get entire subtable from records
+#;(define (assoc-sub sub-label records) ; get entire subtable from records
   ; sub-name is just the atom, like 'a. sub-label=(TABLE-LABEL . 'a)
 ;  (let ([sub-label (cons TABLE-LABEL sub-name)])
     (assoc sub-label (car records)))
 
-(define (get-subtable sub-label records)
+#;(define (get-subtable sub-label records)
   (let ([first-subtable (caar records)])
     (assoc sub-label records)))
 
@@ -707,10 +801,79 @@ Z2
 
 ;(define m1 '((*table* root table) ((*table* 'a 1))))
 
+; *******************************************
+; Ex 3.27, Memoization
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+; where the memoizer is defined as
+(define (memoize f)
+  (let ((table (make-table)))
+    (lambda (x)
+      (let ((previously-computed-result (lookup x table)))
+        (or previously-computed-result
+            (let ((result (f x)))
+              (insert! x result table)
+              result))))))
+; The memoized version of the same procedure is
+(define memo-fib
+  (memoize (lambda (n)
+             (cond ((= n 0) 0)
+                   ((= n 1) 1)
+                   (else (+ (memo-fib (- n 1))
+                            (memo-fib (- n 2))))))))
+
+(define mem-fib2 (memoize fib))
+; mem-fib memoizes itself, whereas mem-fib2 doesn't, so it's
+; just as inefficient as fib (which is to say, very).
+; *******************************************
+; Representing wires
+(define (make-wire)
+  (let ((signal-value 0) (action-procedures '()))
+    (define (set-my-signal! new-value)
+      (if (not (= signal-value new-value))
+          (begin (set! signal-value new-value)
+                 (call-each action-procedures))
+          'done))
+    (define (accept-action-procedure! proc)
+      (set! action-procedures (cons proc action-procedures))
+      (proc))
+    (define (dispatch m)
+      (cond ((eq? m 'get-signal) signal-value)
+            ((eq? m 'set-signal!) set-my-signal!)
+            ((eq? m 'add-action!) accept-action-procedure!)
+            (else (error "Unknown operation -- WIRE" m))))
+    dispatch))
+
+; The local procedure set-my-signal! tests whether the new signal value changes the signal on the wire. If so, it runs each of the action procedures, using the following procedure call-each, which calls each of the items in a list of no-argument procedures:
+
+(define (call-each procedures)
+  (if (null? procedures)
+      'done
+      (begin
+        ((car procedures))
+        (call-each (cdr procedures)))))
+; *******************************************
+; A simulator for Digital Circuits
 
 
-; *******************************************
-; *******************************************
+(define a (make-wire))
+(define b (make-wire))
+(define c (make-wire))
+
+(define d (make-wire))
+(define e (make-wire))
+(define s (make-wire))
+
+; We attach a function box to a set of wires by calling a procedure that constructs that kind of box. The arguments to the constructor procedure are the wires to be attached to the box. For example, given that we can construct and-gates, or-gates, and inverters, we can wire together the half-adder shown in figure 3.25:
+
+(or-gate a b d)
+(and-gate a b c)
+(inverter c e)
+(and-gate d e s)
 ; *******************************************
 ; *******************************************
 ; *******************************************
