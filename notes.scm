@@ -1,5 +1,7 @@
+#lang racket
+
 ; To require a module when using #lang sicp, add #%:
-(#%require "a-GREAT-steering-wheel-that-wont-WHIFF-out-the-window-while-I-driving.scm")
+; (#%require "a-GREAT-steering-wheel-that-wont-WHIFF-out-the-window-while-I-driving.scm")
 
 
 ; *******************************************
@@ -11,8 +13,42 @@
 
 ; ((λ (<var>) <body>) <exp>)
 
+
+; (let ([V1 E1])
+;   B1) is interpreted as an alternate syntax for
+
+; ((λ (V1) B1) E1)
+
+(let ([V1 E1])
+  (let ([V2 E2]) ; B1 is this 2nd let block
+    B2)) ; 
+
+((λ (V1)
+   ((λ (V2) B2) E2)) E1)
+
 ; *******************************************
+
+#;(define (sum lst)
+  (cond [(cons? lst)
+         (+ (car lst) (sum (cdr lst)))]
+        [else 0]))
+;(display (sum '(1 3 5 -2 17)))
+(define (sum lst cont)
+  (cond [(cons? lst)
+         (sum (cdr lst)
+              (λ (acc) (cont (+ (car lst) acc))))]
+        [else (cont 1)]))
+(sum '(1 3 5 -2 17) display)
+(sum '() abs)
 ; *******************************************
+;(define f (lambda (acc)
+           ;     (cont (+ (car lst) acc))))
+;(define (sum2 lst cont)
+;  (cond [(cons? lst) (sum2 (cdr lst) 
+              
+              
+ ;       [else (cont 0)]))
+;(sum '(1 3 5 -2 17) display)
 ; *******************************************
 ; *******************************************
 ; *******************************************
