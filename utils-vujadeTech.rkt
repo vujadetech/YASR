@@ -1,5 +1,13 @@
 (module utils-vujadeTech racket
-  (provide vujadeTech repeat powers
+  (require srfi/1) ; for zip
+  
+  (provide zip ; from srfi/i
+
+           ; rest are from vujadeTech or stolen from, I mean "inspired by", SICP :D
+           make-accumulator
+           decimal->binary-list binary-list->decimal list-of-char->string
+           nth list->values duple-to-pair
+           vujadeTech repeat powers
            mod negative -- ++ non-empty-list? singleton-list?
            range-fixed sq square nil 1/
            halve fst snd           ; zero?
@@ -16,6 +24,42 @@
   (define (vujadeTech)
     (display "Tomorrow's future ... yesterday!"))
 
+  ; string->number, number->string, integer->char
+  (define (make-accumulator value)
+    (let ([INITIAL-VALUE value]) ; INITIAL-VALUE never changes, it's used to reset.
+      (define add
+        (λ (increment)
+          (set! value (+ value increment))
+          value))
+      (define get (λ () (add 0))) ; NOT (define get value).
+      (define reset (λ () (set! value INITIAL-VALUE) value))
+      (define (dispatch m)
+        (cond
+          [(eq? m 'add) add]
+          [(eq? m '++) (add 1)]
+          [(eq? m 'reset) (reset)]
+          [(eq? m 'get) (get)]
+          [else (get)])) ; any other symbol just calls get by default
+      dispatch))
+    
+  (define list-of-char->string list->string)
+  (define (binary-list->decimal bs)
+    (string->number (string-append "#b" (apply string-append (map (λ(b) (number->string b 2)) bs)))))
+  
+  (define (decimal->binary-list x)
+    (let ([zero-ascii-value 48][binary-base 2])
+      (map (λ (n) (- n zero-ascii-value)) (map char->integer (string->list (number->string x binary-base))))))
+  
+  (define (duple-to-pair duple) ; (a b) => (a . b)
+    (cons (car duple) (cadr duple)))
+  
+  (define (list->values xs) (apply values xs))
+  
+  ; nth is in data/collection, but it requires sequences as input, not lists.
+  (define (nth ns k)
+    (if (zero? k) (car ns)
+        (nth (cdr ns) (-- k))))
+  
   (define (repeat x n) ; kludgy, but it'll git-r-done until and if I decide to incorporate data/collections which has it built in.
     ; TODO: 
     (map (λ (_) x) (range 1 (++ n)))) 
@@ -107,5 +151,6 @@
   (define (++! x) (+=! x 1))
 
  ; (define (nand x y) (not (and x y)))
-  
+
+
 )

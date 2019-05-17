@@ -5,7 +5,7 @@
 (require rnrs/mutable-pairs-6)
 
 (require srfi/1)
-(require "utils-vujadeTech.scm")
+(require "utils-vujadeTech.rkt")
 
 ; *******************************************
 ; Sec 3.1 Assignment and local state

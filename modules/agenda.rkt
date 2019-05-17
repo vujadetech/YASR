@@ -1,7 +1,8 @@
 (module agenda racket
-  (require "queue.rkt")
-  (require r5rs) ; for set-car! and related
-
+  ;(require "queue.rkt")
+  ;(require r5rs) ; for set-car! and related
+  (require "queue.rkt" r5rs)
+  
   (provide the-agenda ; just one agenda right now, TODO: generalize.
            make-agenda  empty-agenda?
            first-agenda-item
