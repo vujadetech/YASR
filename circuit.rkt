@@ -32,43 +32,8 @@
             ((eq? m 'add-action!) accept-action-procedure!)
             (else (error "Unknown operation -- WIRE" m))))
     dispatch))
-; END make-wire
-
-; I'm changing SICP's semantics slightly. A wire is a pair of a label and
-; what I'll now call the "bare-metal-wire" (SICP wire) b/c it's funny and I needed a different name.
-(define (make-labelled-wire label) (cons label (make-wire)))
-(define (make-labelled-wires labels) (map make-labelled-wire labels))
-(define (get-label wire) (car wire))
-(define (get-labels ws) (map get-label ws))
-(define (get-bare-metal wire) (cdr wire))
-(define (get-bare-metals ws) (map get-bare-metal ws))
-(define (make-bare-metals n) (repeat (make-wire) n))
-
-; ***********************************************
-; get-signal code (basic version already set from sicp code)
-(define (get-signal* w*) (cons (get-label w*) (get-signal (get-bare-metal w*))))
-(define (get-signals ws) ; ws = a list of bare-metal-wires, no labels
-  (map get-signal ws))
-#;(define (get-signals* ws*) ; returns list of pairs '((label0, x0) (label1, x1)...)
-  (map duple-to-pair (zip (get-labels ws*) (get-signals (get-bare-metals ws*)))))
-(define (get-signals* ws*) (map get-signal* ws*))
-
-(define (get-nth-signal* ws* n) ; 0 based, wires are pairs with labels
-  (let* ([pn (nth ws* n)][label-n (get-label pn)][wire-n (get-bare-metal pn)])
-    (cons label-n (get-signal wire-n))))
-
-(define (get-nth-wire* ws* n) (nth ws* n))
-; ***********************************************
-; set-signal code (basic version already set from sicp code)
-(define (flip-signal! w) (set-signal! w (logical-not (get-signal w)))) ; added for clock but could be more generally useful
-(define (set-signal*! w* x) ; w = wire, x = new signal value
-  (set-signal! (get-bare-metal w*) x))
-(define (set-signals! bare-metals xs)
-  (let ([wires-values (zip bare-metals xs)])
-    (map (λ (wv) (set-signal! (car wv) (cadr wv))) wires-values)))
-(define (set-signals*! ws* xs) (map set-signal*! ws* xs))
-; ***********************************************
-
+; END make-wire function
+; make-wire related:
 (define (call-each procedures) ; used in make-wire
   (if (null? procedures)
       'done
@@ -96,7 +61,63 @@
                  (display (get-signal wire))
                  (newline)
                  )))
+; I'm changing SICP's semantics slightly. A wire is a pair of a label and
+; what I'll now call the "bare-metal-wire" (SICP wire) b/c it's funny and I needed a different name.
+(define (make-labelled-wire label) (cons label (make-wire)))
+(define (make-labelled-wires labels) (map make-labelled-wire labels))
+(define (get-label wire) (car wire))
+(define (get-labels ws) (map get-label ws))
+(define (get-bare-metal wire) (cdr wire))
+(define (get-bare-metals ws) (map get-bare-metal ws))
+(define (make-bare-metals n) (repeat (make-wire) n))
+; ***********************************************
+; get-signal code (basic version already set from sicp code)
+(define (get-signal* w*) (cons (get-label w*) (get-signal (get-bare-metal w*))))
+(define (get-signals ws) ; ws = a list of bare-metal-wires, no labels
+  (map get-signal ws))
+#;(define (get-signals* ws*) ; returns list of pairs '((label0, x0) (label1, x1)...)
+  (map duple-to-pair (zip (get-labels ws*) (get-signals (get-bare-metals ws*)))))
+(define (get-signals* ws*) (map get-signal* ws*))
 
+(define (get-nth-signal* ws* n) ; 0 based, wires are pairs with labels
+  (let* ([pn (nth ws* n)][label-n (get-label pn)][wire-n (get-bare-metal pn)])
+    (cons label-n (get-signal wire-n))))
+
+(define (get-nth-wire* ws* n) (nth ws* n))
+; ***********************************************
+; set-signal code (basic version already set from sicp code)
+(define (flip-signal! w) (set-signal! w (logical-not (get-signal w)))) ; added for clock but could be more generally useful
+(define (set-signal*! w* x) ; w = wire, x = new signal value
+  (set-signal! (get-bare-metal w*) x))
+(define (set-signals! bare-metals xs)
+  (let ([wires-values (zip bare-metals xs)])
+    (map (λ (wv) (set-signal! (car wv) (cadr wv))) wires-values)))
+(define (set-signals*! ws* xs) (map set-signal*! ws* xs))
+; ***********************************************
+
+; Logic 'R Us (a subsidiary of "Literacy 'R Us").
+; Please don't tell "Toys 'R Us" lest they sue for copyright infringement.
+; TODO-laffs: Clip of "Toys 'L Us" from simpsons
+
+(define (logical-not s)
+  (cond ((= s 0) 1)
+        ((= s 1) 0)
+        (else (error "Invalid signal" s))))
+
+(define (logical-or s1 s2)
+  (cond ((and (= s1 0) (= s2 0)) 0)
+        ((or (= s1 1) (= s2 1)) 1)
+        (else (error "Invalid signal" s1 s2))))
+
+(define (logical-nor s1 s2) (logical-not (logical-or s1 s2)))
+
+(define (logical-and s1 s2)
+  (cond ((and (= s1 1) (= s2 1)) 1)
+        ((or (= s1 0) (= s2 0)) 0)
+        (else (error "Invalid signal" s1 s2))))
+
+; Bill's gates (not to be confused with Bill Gates, the fact that
+; the gates belong to a man named "Bill" is just a coincidence).
 
 (define (inverter input output)
   (define (invert-input)
@@ -107,11 +128,6 @@
   (add-action! input invert-input)
   'ok)
 
-(define (logical-not s)
-  (cond ((= s 0) 1)
-        ((= s 1) 0)
-        (else (error "Invalid signal" s))))
-      
 (define (and-gate a1 a2 output)
   (define (and-action-procedure)
     (let ((new-value
@@ -122,16 +138,6 @@
   (add-action! a1 and-action-procedure)
   (add-action! a2 and-action-procedure)
   'ok)
-
-(define (logical-or s1 s2)
-  (cond ((and (= s1 0) (= s2 0)) 0)
-        ((or (= s1 1) (= s2 1)) 1)
-        (else (error "Invalid signal" s1 s2))))
-      
-(define (logical-and s1 s2)
-  (cond ((and (= s1 1) (= s2 1)) 1)
-        ((or (= s1 0) (= s2 0)) 0)
-        (else (error "Invalid signal" s1 s2))))
 
 (define (or-gate a1 a2 output)
   (define (or-action-procedure)
@@ -144,17 +150,49 @@
   (add-action! a2 or-action-procedure)
   'ok)
 
-(define (nand a1 a2 out) ; nand gate implemented as an or gate into an inverter
+(define (nor-gate a1 a2 output)
+  (define (nor-action-procedure)
+    (let ((new-value
+           (logical-nor (get-signal a1) (get-signal a2))))
+      (after-delay
+       (+ or-gate-delay inverter-delay)
+       (lambda () (set-signal! output new-value)))))
+  (add-action! a1 nor-action-procedure)
+  (add-action! a2 nor-action-procedure)
+  'ok)
+
+; Derived gates (using Bill's gates as a basis), so I don't have to
+; call the add-action! procedure :D
+
+#;(define (nor nor1 nor2 out) ; nor gate implemented as an or gate into an inverter
   (let ([or-out (make-wire)])
-    (or-gate a1 a2 or-out)
-    (inverter or-out out)
-    'nand-ok))
+    (or-gate nor1 nor2 or-out)
+    (inverter or-out out))
+    'nor-ok)
 
+(define (nand a1 a2 out)
+  (let ([and-out (make-wire)])
+    (and-gate a1 a2 and-out)
+    (inverter and-out out))
+    'nand-ok)
 
-(define (nand+ as out) ; as is a list of bare-metals
+(define (xor in1 in2 out) 
+  (let ([xor-out (make-wire)][not-in1 (make-wire)][not-in2 (make-wire)][and1-out (make-wire)][and2-out (make-wire)])
+    (inverter in2 not-in2) (inverter in1 not-in1)
+    (and in1 not-in2 and1-out)
+    (and in2 not-in1 and2-out)
+    (or-gate and1-out and2-out out))
+    'xor-ok)
+
+(define (sr-latch s r q) ; sr latch with just 1 output, q
+  (let ([q_ (make-wire)])  ; [nor-r-in (make-wire)][nor-s-out (make-wire)]) ; [nor-s (make-wire)]
+    (nor-gate s q q_)
+    (nor-gate r q_ q))
+  'sr-latch-ok)
+
+(define (nand+ as out) ; as is a list of bare-metals.
   (let-values ([(a0 a1) (list->values as)])
    (nand a0 a1 out)
-   ; (list a0 a1)
     ))
 
 (define nand+in0 (make-wire))
@@ -246,9 +284,9 @@
 (probe 'and-out and-out)
 (and-gate and0 clock-out and-out)
 
-
 (define (make-clock out)
   (let ([cycle-count (make-accumulator 0)])
+    (define (get-cycle-count) (display "Cycle count: ") (cycle-count 'get))
     (define advance1 ; advance 1 clock cycle
       (λ ()
         (display (cycle-count 'get))
@@ -258,18 +296,19 @@
         ))
     (define advance ; advance k clock cycles
       (λ (k) ; k > 0
-        (cond
+        (cond ; using cond instead of if since else has 2 steps and I'm too lazy
+          ; to type "begin", although I just did. :D
           [(= k 1) (advance1)]
           [else (advance1) (advance (-- k))])))
     (define (dispatch m)
       (cond
+        [(eq? m 'get-cycle-count) (get-cycle-count)]
         [(eq? m 'advance1) (advance1)]
         [(eq? m 'advance)   advance]
         [else 'error-dispatch-make-clock]))
     dispatch))
 (define clock (make-clock clock-out))
                
-
 (define (clock-h freq-Hz out max-cycles) ;
   (let ([flip-delay (/ 1 freq-Hz)][cycle-acc (make-accumulator 0)])
     (sleep flip-delay)
@@ -278,18 +317,6 @@
     (display (cycle-acc 'get))
     (unless (> (cycle-acc 'get) max-cycles)
       (clock-h freq-Hz out max-cycles))))
-;(clock 2 out)
-
-  
-#;(define (inverter input output)
-  (define (invert-input)
-    (let ((new-value (logical-not (get-signal input))))
-      (after-delay inverter-delay
-                   (lambda ()
-                     (set-signal! output new-value))))) ;output signal changes after one inverter-delay
-  (add-action! input invert-input)
-  'ok)
-
 
 ; TESTING AREA
 ;(test-gate nand+ '(0 0) 1)
@@ -302,6 +329,15 @@
 (define sum1 (make-wire))
 (define c-out (make-wire))
 ;(define generic-nand* (nand* (make-labelled-wires '(a0 a1)) (make-labelled-wire 'out))) ; (nand* nand*-ins nand*-out))
+
+; Test sr-latch
+(define r (make-wire))(define s (make-wire))
+(define q (make-wire))
+(probe 'q q)
+;(define q_ (make-wire))(set-signal! q_ 1) ; q_ must be opposite
+;(sr-latch r s q q_)
+;(sr1 s r q)
+;(sr1b s r q)
 
 (define (ripple-adder-2 as bs c-in sum0 sum1 c-out)
   (let ([c0 (make-wire)][a-wires (get-bare-metals as)][b-wires (get-bare-metals bs)])
