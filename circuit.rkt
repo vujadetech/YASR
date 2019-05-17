@@ -11,6 +11,9 @@
 (define inverter-delay 2)
 (define and-gate-delay 3)
 (define or-gate-delay 5)
+(define nor-gate-delay (+ inverter-delay or-gate-delay))
+(define gated-d-latch-delay (+ inverter-delay and-gate-delay nor-gate-delay))
+(define DFF-delay 1)
 ; END GLOBALS
 
 (define (make-wire)
@@ -184,12 +187,48 @@
     (or-gate and1-out and2-out out))
     'xor-ok)
 
-(define (sr-latch s r q) ; sr latch with just 1 output, q
-  (let ([q_ (make-wire)])  ; [nor-r-in (make-wire)][nor-s-out (make-wire)]) ; [nor-s (make-wire)]
+#;(define (sr-latch s r q) ; sr latch with just 1 output, q
+  (let ([q_ (make-wire)])  ; q_ is not-q
     (nor-gate s q q_)
     (nor-gate r q_ q))
   'sr-latch-ok)
 
+(define (sr-latch-direct s r q) ;
+0)
+  ;(define (sr-action-procedure) 0))
+
+#; (define (gated-d-latch d e q) ; based on wikipedia SR NOR latch: wiki/Flip-flop_(electronics)
+  (let ([d-not (make-wire)]
+       ; [d-e-and-out (make-wire)] ; 
+        [s (make-wire)][r (make-wire)])
+    (inverter d d-not)
+    (and-gate d-not e r)
+    (and-gate d e s)
+    (sr-latch s r q))
+     'gated-d-latch-ok)
+
+(define (DFF in clock out) ; direct implementation of data flip-flop
+  ; from Elements of Comp Sys book.
+  ; [Joke break]: How do you know you've been spending too much time
+  ; in your electronics lab? When you're DFF is a BFF. HEY-oh! 
+  (define (DFF-action-procedure)
+    (let ([Q-now (get-signal out)])
+      (let ([Q-next (if (zero? (get-signal clock)) Q-now (get-signal in))])
+        (after-delay DFF-delay (λ () (set-signal! out Q-next))))))
+  (add-action! in DFF-action-procedure)
+  (add-action! clock DFF-action-procedure) ; clock is acting like an input, so it needs and action proc  
+  'DFF-ok)
+
+(define (gated-d-latch d e q) ; direct version using add-action!
+  (define (gated-d-latch-act-proc)
+    (let ([d-sig (get-signal d)][e-sig (get-signal e)][q-sig (get-signal q)])
+      (let ([q-new (if (zero? e-sig) q-sig ; hold current value
+                       d-sig)]) ; q-sig(n+1) = d-sig(n)
+        (after-delay gated-d-latch-delay (λ () (set-signal! q q-new))))))
+  (add-action! d gated-d-latch-act-proc)
+  (add-action! e gated-d-latch-act-proc)
+  'gated-d-latch-ok)
+  
 (define (nand+ as out) ; as is a list of bare-metals.
   (let-values ([(a0 a1) (list->values as)])
    (nand a0 a1 out)
@@ -278,13 +317,13 @@
 (define clock-out (make-wire))
 (probe 'clock-out  clock-out)
 (define and0 (make-wire))
-(probe 'and0 and0)
-(set-signal! and0 1)
-(define and-out (make-wire))
-(probe 'and-out and-out)
-(and-gate and0 clock-out and-out)
+;(probe 'and0 and0)
+;(set-signal! and0 1)
+;(define and-out (make-wire))
+;(probe 'and-out and-out)
+;(and-gate and0 clock-out and-out)
 
-(define (make-clock out)
+(define (make-clock out) ; Connect wire out to the clock output
   (let ([cycle-count (make-accumulator 0)])
     (define (get-cycle-count) (display "Cycle count: ") (cycle-count 'get))
     (define advance1 ; advance 1 clock cycle
@@ -300,11 +339,15 @@
           ; to type "begin", although I just did. :D
           [(= k 1) (advance1)]
           [else (advance1) (advance (-- k))])))
+    (define (clock-is-low?) (zero? (get-signal out)))
     (define (dispatch m)
       (cond
+        [(eq? m 'get-signal) (get-signal out)]
         [(eq? m 'get-cycle-count) (get-cycle-count)]
         [(eq? m 'advance1) (advance1)]
         [(eq? m 'advance)   advance]
+        [(eq? m 'clock-is-low?) (clock-is-low?)]
+        [(eq? m 'clock-is-high?) (not (clock-is-low?))]
         [else 'error-dispatch-make-clock]))
     dispatch))
 (define clock (make-clock clock-out))
@@ -330,14 +373,26 @@
 (define c-out (make-wire))
 ;(define generic-nand* (nand* (make-labelled-wires '(a0 a1)) (make-labelled-wire 'out))) ; (nand* nand*-ins nand*-out))
 
+; Test DFF
+(define din (make-wire))(define dout (make-wire))
+(probe 'din din)
+(probe 'dout dout)
+(DFF din clock-out dout)
+
 ; Test sr-latch
 (define r (make-wire))(define s (make-wire))
 (define q (make-wire))
 (probe 'q q)
+;(sr-latch s r q)
 ;(define q_ (make-wire))(set-signal! q_ 1) ; q_ must be opposite
 ;(sr-latch r s q q_)
 ;(sr1 s r q)
 ;(sr1b s r q)
+; Test d flip flop
+(define d (make-wire))(define e (make-wire))
+(define Q (make-wire))
+(probe 'Q Q)
+;(gated-d-latch d e Q)
 
 (define (ripple-adder-2 as bs c-in sum0 sum1 c-out)
   (let ([c0 (make-wire)][a-wires (get-bare-metals as)][b-wires (get-bare-metals bs)])
@@ -375,18 +430,18 @@
 (define input-2 (make-wire))
 (define sum (make-wire))
 (define carry (make-wire))
-(probe 'sum sum)
+;(probe 'sum sum)
 ;sum 0  New-value = 0
-(probe 'carry carry)
+;(probe 'carry carry)
 ;carry 0  New-value = 0
 
 ; Next we connect the wires in a half-adder circuit (as in figure 3.25), set the signal on input-1 to 1, and run the simulation:
 
 ;(half-adder input-1 input-2 sum carry)
 ;ok
-(set-signal! input-1 1)
+;(set-signal! input-1 1)
 ;done
-(propagate)
+;(propagate)
 ;sum 8  New-value = 1
 ;done
 
@@ -402,6 +457,6 @@
 ; Test nand:
 (define i1 (make-wire))
 (define i2 (make-wire))
-(define nand-out (make-wire))
+;(define nand-out (make-wire))
 ;(probe 'nand-out nand-out)
-(nand i1 i2 nand-out)
+;(nand i1 i2 nand-out)
