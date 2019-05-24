@@ -56,11 +56,13 @@
 (define-syntax cons-stream ; see stack-exchange "how-is-the-sicp-cons-stream-implemented"
   (syntax-rules ()
     ((cons-stream a b) (cons a (memo-proc (lambda () b))))))
+
 (define (stream-car stream) (car stream))
 (define (stream-cdr stream) (force (cdr stream))) ; steam-cdr = dream realized
 
 (define the-empty-stream '())
 (define (stream-null? s) (null? s))
+(define stream-empty? stream-null?)
 
 ; p435 SICP
 (define (stream-enumerate-interval low high)
@@ -104,7 +106,7 @@
 
 ; stream-prime works at the same speed no matter what
 ; the second parameter is, even if it's one bajillion:
-(stream-prime 10000 100000000000000) ; => 10009
+;(stream-prime 10000 100000000000000) ; => 10009
 
 ; *******************************************
 ; Exercise 3.50
@@ -128,20 +130,122 @@
 (define primes-to-million (prime-stream 2 1000000))
 (define nats-to-million (stream-enumerate-interval 1 1000000))
 (define add-prime-to-nat (stream-map + primes-to-million nats-to-million))
-(define (take-stream stream k) ; make a normal list up to k elements of a stream
+(define (stream-take stream k) ; make a normal list up to k elements of a stream
   (if (zero? k) '()
-      (cons (stream-car stream) (take-stream (stream-cdr stream) (-- k)))))
+      (cons (stream-car stream) (stream-take (stream-cdr stream) (-- k)))))
 
 (define add-nats (stream-map + nats-to-million nats-to-million))
 ;add-nats ; => (2 . #<procedure:...-stream-sicp.scm:27:4>)
-;(take-stream add-nats 10) ; => (2 4 6 8 10 12 14 16 18 20)
+;(stream-take add-nats 10) ; => (2 4 6 8 10 12 14 16 18 20)
 
 ; *******************************************
+; Ex 3.51
+(define (show x)
+  (display x)
+  x)
+
+; What does the interpreter print in response to evaluating each expression in the following sequence?59
+
+;(define x (stream-map show (stream-enumerate-interval 0 100)))
+;(stream-ref x 5)
+;(stream-ref x 7)
+
 ; *******************************************
+; Ex 3.52
+
+; I'm gonna guess that it would give different results, since it
+; would "forget" that it had already been run, and then keep doing the side-effects.
+
 ; *******************************************
+; Sec 3.5.2 Infinite Streams
+
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+(define integers (integers-starting-from 1))
+
+(define (divisible? x y) (= (remainder x y) 0))
+
+(define no-sevens
+  (stream-filter (lambda (x) (not (divisible? x 7)))
+                 integers))
+
+(define (fibgen a b)
+  (cons-stream a (fibgen b (+ a b))))
+;(define fibs (fibgen 0 1))
+
+(define (stream-scale stream k) ; all stream values multiplied by k
+  (stream-map (lambda (x) (* k x)) stream))
+
+(define evens2mil (stream-scale nats-to-million 2))
+(define (stream-remove-multiples k stream) ; stream with multiples of k filtered out
+  (stream-filter (lambda (x) (! (divides? k x))) stream))
+
+(define odds (stream-remove-multiples 2 integers))
+
+(define (stream-remove-multiples-of-car stream)
+  (let ([kar (stream-car stream)])
+    (stream-remove-multiples kar stream)))
+
+(define (stream-foldl proc e stream)
+  "TODO")
+
+#;(define (sieve stream)
+ ; (iffy (< (stream-car stream) 2) (error "Sieving on a stream whose car < 2."))
+  (cond
+    [(stream-empty? stream) the-empty-stream]
+    [else
+     (let ([stream1 (stream-remove-multiples (stream-car stream) stream)])
+       stream1)]))
+
+; I decided to refactor SICP's sieve for some reason.
+; All due respect to Mr. Eratosthones, of course.
+#;(define (sieve stream)
+  (cond
+    [(stream-empty? stream) the-empty-stream]
+    [else
+      (let* ([stream1 (stream-remove-multiples-of-car stream)] ; stream1 is odds >= 3 on first run
+             [kar (stream-car stream1)])
+       (cons-stream kar (sieve (cons kar (stream-cdr stream1)))))]))
+
+#;(define (sieve stream) ; assume infinite stream since filtering composites will leave an infinite list
+  (let* ([kar (stream-car stream)][srmoc (stream-remove-multiples-of-car stream)])
+    (cons-stream kar (sieve srmoc))))
+
+(define (sieve stream) 
+  (cons-stream (stream-car stream) (sieve (stream-remove-multiples-of-car stream))))
+
+(define (stream-fold-right f acc stream)
+  (if (stream-null? stream) acc
+      (f (stream-car stream) (stream-fold-right f acc (stream-cdr stream)))))
+
+(define 2andUp (integers-starting-from 2))
+(define primes (sieve 2andUp))
+
+(define ones (cons-stream 1 ones))
+
 ; *******************************************
+; brain teaser: what if you do (stream-remove-multiples 1 integers)?
 ; *******************************************
+; Defining streams implicitly
+
+(define (add-streams s1 s2) (stream-map + s1 s2))
+
+#;(define fibs ; fibs implicit
+  (cons-stream 0 (cons-stream 1 (add-streams (stream-cdr fibs) fibs))))
+
+(define fibs ; fibs implicit order changed, works the same
+  (cons-stream 0 (cons-stream 1 (add-streams fibs (stream-cdr fibs) ))))
+
 ; *******************************************
+; Ex 3.53
+; Just duplicate s which is two streams that start with 1, so then is 2.
+; Then both have 2 so sum is 4. Then both have 4 so sum is 8,
+; yada yada, it's powers of 2 baybee!
+
+(define s (cons-stream 1 (add-streams s s)))
+; (stream-take s 10) ; => (1 2 4 8 16 32 64 128 256 512)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
