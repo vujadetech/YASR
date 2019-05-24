@@ -1,6 +1,5 @@
 (module agenda racket
-  ;(require "queue.rkt")
-  ;(require r5rs) ; for set-car! and related
+; Everyone has an agenda ...
   (require "queue.rkt" r5rs)
   
   (provide the-agenda ; just one agenda right now, TODO: generalize.
