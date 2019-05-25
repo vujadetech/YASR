@@ -287,6 +287,18 @@
 
 ; *******************************************
 ; *******************************************
+; Ex 3.58
+(define (expand num den radix)
+  (cons-stream
+   (quotient (* num radix) den)
+   (expand (remainder (* num radix) den) den radix)))
+
+(define exp1710 (expand 1 7 10))
+; It's the base radix expansion of the fraction num/den.
+; By Euclid's algorithm this will repeat if gcd(den, radix) != 1, e.g.:
+(stream-take (expand 3 8 10) 30) ; => 
+; (3 7 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
