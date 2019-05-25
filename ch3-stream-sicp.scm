@@ -453,24 +453,37 @@
 ; *******************************************
 ; Ex 3.68
 ; Honestly this one's a bit of a brain buster.
-#;(define (pairs s t)
+; My nickname for Louis Reasoner is Louis "Not reasoning very well at all b/c he's hopped up on red bull after
+; coding for 22 hours straight in his mother's root cellar."
+#;(define (pairs s t) ; copy of real version above for comparison with Louis' bad version, pairs-68 (below).
   (cons-stream
    (list (stream-car s) (stream-car t))
    (interleave
-    (stream-map (lambda (x) (list (stream-car s) x))
-                (stream-cdr t))
+    (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
     (pairs (stream-cdr s) (stream-cdr t)))))
 
-(define (pairs-68 s t)
+(define (pairs-68 s t) ; Louis' refactoring of SICP's perfect pairs procedure.
   (interleave
-   (stream-map (lambda (x) (list (stream-car s) x))
-               t)
+   (stream-map (lambda (x) (list (stream-car s) x))   t)
    (pairs-68 (stream-cdr s) (stream-cdr t))))
 ; => infinite loop
-
 (define 68-a ((lambda (s t) (stream-map (lambda (x) (list (stream-car s) x))
                t)) integers integers))
-; => also infinite loop - maybe b/c not cdring on t?
+; => also infinite loop - maybe b/c not stream-cdring on t?
+
+; Got an idea from community.schemewiki.org/?sicp-ex-3.68:
+(define (redbull s t) ; Adding a cons stream to beginning of pairs-68 will solve the non-halting behavior.
+  (cons-stream
+   "Louis is hopped up on red bull" ; Just need anything here to diagnose the halting/non-halting issue.
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))   t)
+    (redbull (stream-cdr s) (stream-cdr t)))))
+  ; => NOT an infinite loop. Not the correct answer either, but at least it's not loopy.
+
+; The folks at schemewiki.org are at it again! Yup, the problem
+; is that interleave is being called directly rather than being wrapped inside a cons-stream, which
+; delays evaluation by default. Ladies and gentleman, one hand clapping against the other
+; makes a VERY nice sound for schemewiki.org!!!
 
 ; *******************************************
 ; Ex 3.69
