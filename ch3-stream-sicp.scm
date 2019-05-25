@@ -176,6 +176,7 @@
 
 (define (stream-scale stream k) ; all stream values multiplied by k
   (stream-map (lambda (x) (* k x)) stream))
+(define scale-stream stream-scale)
 
 (define evens2mil (stream-scale nats-to-million 2))
 (define (stream-remove-multiples k stream) ; stream with multiples of k filtered out
@@ -263,7 +264,27 @@
   (cons-stream (stream-car stream)
                (add-streams (stream-cdr stream) (partial-sums stream))))
 
+;; (stream-take (partial-sums integers) 10) ; => (1 3 6 10 15 21 28 36 45 55)
 ; *******************************************
+; Ex 3.56, Hamming
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+         (let ((s1car (stream-car s1))
+               (s2car (stream-car s2)))
+           (cond ((< s1car s2car)
+                  (cons-stream s1car (merge (stream-cdr s1) s2)))
+                 ((> s1car s2car)
+                  (cons-stream s2car (merge s1 (stream-cdr s2))))
+                 (else
+                  (cons-stream s1car
+                               (merge (stream-cdr s1)
+                                      (stream-cdr s2)))))))))
+
+(define S
+  (cons-stream 1 (merge (scale-stream S 2) (merge (scale-stream S 3) (scale-stream S 5)))))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
