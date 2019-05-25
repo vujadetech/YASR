@@ -246,6 +246,9 @@
 (define s (cons-stream 1 (add-streams s s)))
 ; (stream-take s 10) ; => (1 2 4 8 16 32 64 128 256 512)
 
+; *******************************************
+; Ex 3.54
+
 (define (mul-streams s1 s2) (stream-map * s1 s2))
 
 ; Sometimes the best way is the most obvious way.
@@ -254,6 +257,12 @@
 ;(stream-take factorials 10) ; => (1 1 2 6 24 120 720 5040 40320 362880)
 
 ; *******************************************
+; Ex 3.55
+
+(define (partial-sums stream) ; nth element of stream is nth partial sum
+  (cons-stream (stream-car stream)
+               (add-streams (stream-cdr stream) (partial-sums stream))))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
