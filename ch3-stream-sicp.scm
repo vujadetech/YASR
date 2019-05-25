@@ -488,7 +488,9 @@
 ; *******************************************
 ; Ex 3.69
 
-(define nats integers)
+(define nats integers) ; nats = naturals, which is more accurate since integers
+; should include negatives whereas nats doesn't. Speaking of which, this
+; exercise is driving me nats. HEY-oh!
 
 (define p1 '(1 2))(define p2 '(2 3))
 
@@ -545,9 +547,50 @@
 (define RC1 (RC R1 C1 dt))
 (define RC1-harmonic-10 (RC1 is1 v0))
 ;; (stream-take RC1-harmonic-10 6) 
-; =>(15 13.0 12.416666666666666 12.166666666666666 12.041666666666666 11.975)
+; => (15 13.0 12.416666666666666 12.166666666666666 12.041666666666666 11.975)
              
 ; *******************************************
+; Ex 3.74
+; From SICP, p468:
+(define (make-zero-crossings input-stream last-value)
+  (cons-stream
+   (sign-change-detector (stream-car input-stream) last-value)
+   (make-zero-crossings (stream-cdr input-stream)
+                        (stream-car input-stream))))
+
+;(define zero-crossings (make-zero-crossings sense-data 0))
+
+(define (list2stream xs) ; for converting the sensor data list to a stream.
+  (if (null? xs) the-empty-stream
+      (cons-stream (car xs) (list2stream (cdr xs)))))
+
+; Since p468 shows intial zero-crossing = 0, the previous value must have been the
+; same sign as the car of 1, so let's just say it was 42 in honor of Sir Douglas Adams.
+; Ok, according to wikipedia he's not officially a Sir, although he should be.
+; Anyhoo, let's get down to brass tacks and do some exciting data entry
+; for mocking up this sensor data.
+
+(define sensor-vals '(42 1  2  1.5  1  0.5  -0.1  -2  -3  -2  -0.5  0.2  3  4))
+(define sense-data (list2stream sensor-vals))
+
+(define (same-sign? x y) 
+  (cond
+    [(and (positive? x) (positive? y)) #t]
+    [(and (negative? x) (negative? y)) #t]
+    [(and (zero? x) (zero? y))         #t]
+    [else #f]))
+
+(define (sign-change-detector prev curr)
+  (cond
+    [(same-sign? curr prev) 0] ; both being zero is counted as the same sign
+    [(negative? prev) 1]       ; went negative to positive
+    [else            -1]))
+
+(define zero-crossings
+  (stream-map sign-change-detector sense-data (stream-cdr sense-data)))
+
+;; (stream-take zero-crossings 12) ; => (0 0 0 0 0 -1 0 0 0 0 1 0)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
