@@ -451,6 +451,27 @@
 ;;(stream-take rationals 20)
 ; => ((1 1) (1 2) (2 2) (2 1) (3 3) (1 3) (4 4) (3 1) (5 5) (2 3) (6 6) (3 2) (7 7) (1 4) (8 8) (4 1) (9 9) (2 4) (10 10) (4 2))
 ; *******************************************
+; Ex 3.68
+; Honestly this one's a bit of a brain buster.
+#;(define (pairs s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+                (stream-cdr t))
+    (pairs (stream-cdr s) (stream-cdr t)))))
+
+(define (pairs-68 s t)
+  (interleave
+   (stream-map (lambda (x) (list (stream-car s) x))
+               t)
+   (pairs-68 (stream-cdr s) (stream-cdr t))))
+; => infinite loop
+
+(define 68-a ((lambda (s t) (stream-map (lambda (x) (list (stream-car s) x))
+               t)) integers integers))
+; => also infinite loop
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
