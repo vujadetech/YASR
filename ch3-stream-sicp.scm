@@ -296,11 +296,81 @@
 (define exp1710 (expand 1 7 10))
 ; It's the base radix expansion of the fraction num/den.
 ; By Euclid's algorithm this will repeat if gcd(den, radix) != 1, e.g.:
-(stream-take (expand 3 8 10) 30) ; => 
+;;(stream-take (expand 3 8 10) 30) ; => 
 ; (3 7 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+; *******************************************
+; Ex 3.59
+(define (div-streams s1 s2) ; element-wise division
+  (stream-map / s1 s2))
+
+(define harmonic-series (div-streams ones integers))
+
+; a.
+(define (integrate-series a_n)
+  (mul-streams harmonic-series a_n))
+
+; b.
+(define exp-series
+  (cons-stream 1 (integrate-series exp-series)))
+
+; Show how to generate the series for sine and cosine, starting from the
+; facts that the derivative of sine is cosine and the derivative of cosine is the negative of sine:
+
+(define cosine-series
+  (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
+(define sine-series
+  (cons-stream 0 (integrate-series cosine-series)))
+(define cos-series cosine-series)
 
 ; *******************************************
+; Ex 3.60
+(define add-series add-streams)
+(define (mul-series as bs)
+  (let ([a0 (stream-car as)]
+        [b0 (stream-car bs)]
+        [a1s (stream-cdr as)]    ; a1s = (a1 a2 a3, ... etc), and same for b1s
+        [b1s (stream-cdr bs)])   
+    (cons-stream (* a0 b0)
+                 (add-streams (mul-series b1s as) ; rest of bs * as
+                              (scale-stream a1s b0)))))
+
+(define sin2 (mul-series sine-series sine-series))
+(define cos2 (mul-series cos-series cos-series))
+(define sin2+cos2 (add-series sin2 cos2))
+
+;; (stream-take sin2+cos2 10) ; => (1 0 0 0 0 0 0 0 0 0)
+
 ; *******************************************
+; Ex 3.64
+
+(define (average x y) (/ (+ x y) 2))
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+
+; In our original sqrt procedure, we made these guesses be the successive values of a state variable. Instead we can generate the infinite stream of guesses, starting with an initial guess of 1:65
+
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream 1.0
+                 (stream-map (lambda (guess)
+                               (sqrt-improve guess x))
+                             guesses)))
+  guesses)
+
+(stream-take (sqrt-stream 2) 6)
+
+(define (stream-limit stream tolerance) ; stop when adjacent elements are within tolerance and return 2nd one
+  (let* ([a0 (stream-car stream)]
+        [cdr1 (stream-cdr stream)]
+        [a1 (stream-car cdr1)]
+        [rest (stream-cdr cdr1)])
+    (if (< (abs (- a0 a1)) tolerance)
+        a1
+        (stream-limit cdr1 tolerance))))
+
+
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
 ; *******************************************
 ; *******************************************
 ; *******************************************
