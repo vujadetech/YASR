@@ -246,6 +246,13 @@
 (define s (cons-stream 1 (add-streams s s)))
 ; (stream-take s 10) ; => (1 2 4 8 16 32 64 128 256 512)
 
+(define (mul-streams s1 s2) (stream-map * s1 s2))
+
+; Sometimes the best way is the most obvious way.
+(define factorials
+  (cons-stream 1 (mul-streams integers factorials)))
+;(stream-take factorials 10) ; => (1 1 2 6 24 120 720 5040 40320 362880)
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
