@@ -431,7 +431,7 @@
   (let ([upper (pairs s t)][lower (pairs (stream-cdr t) (stream-cdr s))])
     (interleave upper lower)))
 
-;(define cantor (pairs-all integers integers))
+(define cantor (pairs-all integers integers))
 
 (define (pairs-upper s t) ; pairs but w/o the diagonal
   (pairs s (stream-cdr t)))
@@ -470,9 +470,45 @@
 
 (define 68-a ((lambda (s t) (stream-map (lambda (x) (list (stream-car s) x))
                t)) integers integers))
-; => also infinite loop
+; => also infinite loop - maybe b/c not cdring on t?
 
 ; *******************************************
+; Ex 3.69
+
+(define nats integers)
+
+(define p1 '(1 2))(define p2 '(2 3))
+
+(define (can-join-tuples? p1 p2) ; p1 a list of 2 elements, same for p2
+  (eq? (cadr p1) (car p2)))
+
+(define (join-tuples p1 p2)
+  (if (can-join-tuples? p1 p2)
+      (list (car p2) (cadr p2))
+      '()))
+
+(define (join-tuple-pair ts) ; ts = '(t0 t1)
+  (join-tuples (car ts) (cadr ts)))
+  
+(define (join-tuple-to-stream t0 ts)
+  (if (can-join-tuples? t0 (stream-car ts))
+      (cons-stream (join-tuples t0 (stream-car ts))
+                   (join-tuple-to-stream t0 (stream-cdr ts)))
+      (join-tuple-to-stream t0 (stream-cdr ts))))
+
+#;(define (triples s t u)
+  (let ([st (pairs s t)][tu (pairs t u)])
+    (let ([st0 (stream-car st)][tu0 (stream-car tu)])
+      42)))
+
+(define (tuple-tuples s t u)
+  (let ([st (pairs s t)][tu (pairs t u)])
+    (let ([candidates (stream-map list st tu)])
+      (let ([unfiltered (stream-map join-tuple-pair candidates)]) ; might have emptys, '()
+        (stream-filter (lambda (t) (not (null? t))) unfiltered)))))
+
+(define test1 (tuple-tuples nats nats nats))
+
 ; *******************************************
 ; *******************************************
 ; *******************************************
