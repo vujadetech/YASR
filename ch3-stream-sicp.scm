@@ -357,8 +357,6 @@
                              guesses)))
   guesses)
 
-(stream-take (sqrt-stream 2) 6)
-
 (define (stream-limit stream tolerance) ; stop when adjacent elements are within tolerance and return 2nd one
   (let* ([a0 (stream-car stream)]
         [cdr1 (stream-cdr stream)]
@@ -368,11 +366,90 @@
         a1
         (stream-limit cdr1 tolerance))))
 
-
 (define (sqrt x tolerance)
   (stream-limit (sqrt-stream x) tolerance))
 ; *******************************************
+; Ex 3.65
+(define (pi-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (pi-summands (+ n 2)))))
+(define pi-stream
+  (scale-stream (partial-sums (pi-summands 1)) 4))
+
+;(stream-take pi-stream 10)
+
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0))           ; Sn-1
+        (s1 (stream-ref s 1))           ; Sn
+        (s2 (stream-ref s 2)))          ; Sn+1
+    (cons-stream (- s2 (/ (square (- s2 s1))
+                          (+ s0 (* -2 s1) s2)))
+                 (euler-transform (stream-cdr s)))))
+
+;(stream-take (euler-transform pi-stream) 10)
+(define (make-tableau transform s)
+  (cons-stream s
+               (make-tableau transform
+                             (transform s))))
+
+(define (accelerated-sequence transform s)
+  (stream-map stream-car
+              (make-tableau transform s)))
+
+#;(stream-take
+ (accelerated-sequence euler-transform pi-stream) 8)
+
+(define E 2.71828)
+(define ln (lambda (n)  (log n E)))
+
+;(stream-take (pi-summands 1) 5)
+(define (ln2-summands n)
+  (cons-stream (/ 1.0 n) (scale-stream (ln2-summands (++ n)) -1)))
+(define ln2-stream (partial-sums (ln2-summands 1)))
+(define ln2-accelerated (accelerated-sequence euler-transform ln2-stream))
+; The alternating harmonic sequence doesn't converge as quickly
+; as pi, but then again the harmonic sequence doesn't converge at all.
 ; *******************************************
+; Ex 3.67
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (interleave s2 (stream-cdr s1)))))
+
+(define (pairs s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+                (stream-cdr t))
+    (pairs (stream-cdr s) (stream-cdr t)))))
+
+;(define xs (pairs integers integers))
+; (stream-take quad1 10)
+(define (pairs-all s t)
+  (let ([upper (pairs s t)][lower (pairs (stream-cdr t) (stream-cdr s))])
+    (interleave upper lower)))
+
+;(define cantor (pairs-all integers integers))
+
+(define (pairs-upper s t) ; pairs but w/o the diagonal
+  (pairs s (stream-cdr t)))
+
+;(define (pairs-lower s t) (pairs-upper t s))
+(define (pairs-lower s t)
+  (stream-map reverse (pairs-upper s t)))
+
+(define (diagonal s t)
+  (cons-stream (list (stream-car s) (stream-car t))
+               (diagonal (stream-cdr s) (stream-cdr t))))
+
+(define upper (pairs-upper integers integers))
+(define lower (pairs-lower integers integers))
+(define slash (diagonal integers integers))
+(define rationals (interleave slash (interleave upper lower)))
+;;(stream-take rationals 20)
+; => ((1 1) (1 2) (2 2) (2 1) (3 3) (1 3) (4 4) (3 1) (5 5) (2 3) (6 6) (3 2) (7 7) (1 4) (8 8) (4 1) (9 9) (2 4) (10 10) (4 2))
 ; *******************************************
 ; *******************************************
 ; *******************************************
